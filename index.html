@@ -29,7 +29,7 @@
             .then(data => {
                 const rows = data.split('\n').slice(1); // Split by line and skip header
                 dictionary = rows.map(row => {
-                    const [latin, german] = row.split(','); // Change to ';' if your CSV uses semicolons
+                    const [latin, german] = row.split(';'); // Change to ';' if your CSV uses semicolons
                     return { 
                         latin: latin?.trim().toLowerCase(), 
                         german: german?.trim() 
