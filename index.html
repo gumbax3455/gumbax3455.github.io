@@ -5,39 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Latin Learning Hub</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 50px; }
-        .search-container { text-align: center; }
-        input { padding: 10px; width: 300px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
-        #result { margin-top: 20px; font-size: 1.2rem; font-weight: bold; color: #333; }
-        .sub-text { font-weight: normal; color: #666; font-size: 1rem; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 50px; background-color: #f4f4f9; }
+        .search-container { text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { padding: 12px; width: 300px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px; outline: none; }
+        input:focus { border-color: #007bff; }
+        #result { margin-top: 20px; min-height: 50px; font-size: 1.2rem; }
+        .german-text { color: #2c3e50; font-weight: bold; }
+        .not-found { color: #a94442; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="search-container">
         <h1>Latin Dictionary</h1>
-        <input type="text" id="searchInput" placeholder="Type a Latin word..." oninput="search()">
+        <input type="text" id="searchInput" placeholder="Search Latin word..." oninput="search()">
         <div id="result"></div>
     </div>
 
     <script>
         let dictionary = [];
 
-        // 1. Load the CSV file
+        // Load the CSV file
         fetch('words.csv')
             .then(response => response.text())
             .then(data => {
-                const rows = data.split('\n').slice(1); // Split by line and skip header
-                dictionary = rows.map(row => {
-                    const [latin, german] = row.split(';'); // Change to ';' if your CSV uses semicolons
+                // Split by newline and remove empty lines
+                const rows = data.split(/\r?\n/).filter(row => row.trim() !== "");
+                
+                // Start from index 1 to skip the header (latin;german)
+                dictionary = rows.slice(1).map(row => {
+                    const columns = row.split(';'); // Using SEMICOLON here
                     return { 
-                        latin: latin?.trim().toLowerCase(), 
-                        german: german?.trim() 
+                        latin: columns[0] ? columns[0].trim().toLowerCase() : "", 
+                        german: columns[1] ? columns[1].trim() : "" 
                     };
-                }).filter(item => item.latin); // Remove empty rows
-            });
+                });
+                console.log("Dictionary loaded:", dictionary);
+            })
+            .catch(err => console.error("Error loading CSV:", err));
 
-        // 2. Search Function
         function search() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const display = document.getElementById('result');
@@ -47,12 +53,13 @@
                 return;
             }
 
+            // Find the word
             const match = dictionary.find(item => item.latin === query);
 
             if (match) {
-                display.innerHTML = `German: <span class="sub-text">${match.german}</span>`;
+                display.innerHTML = `German: <span class="german-text">${match.german}</span>`;
             } else {
-                display.innerHTML = "<span class='sub-text'>Word not found</span>";
+                display.innerHTML = `<span class="not-found">Word "${query}" not found</span>`;
             }
         }
     </script>
