@@ -3,76 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latin Word List</title>
+    <title>Latin Learning Hub</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
-        h1 { text-align: center; }
-        .stats { text-align: center; color: #666; margin-bottom: 20px; font-style: italic; }
-        
-        /* Table Styling */
-        table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #007bff; color: white; position: sticky; top: 0; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        tr:hover { background-color: #f1f1f1; }
-        
-        .latin-col { font-weight: bold; color: #2c3e50; width: 40%; }
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f9; }
+        .container { background: white; padding: 2rem; display: inline-block; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { padding: 12px; width: 250px; border: 2px solid #ddd; border-radius: 5px; }
+        #result { margin-top: 20px; font-size: 1.2rem; min-height: 1.5em; }
+        #status { font-size: 0.8rem; color: #888; margin-bottom: 10px; }
+        .german-text { color: #2c3e50; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>Latin-German Vocabulary</h1>
-    <div id="status" class="stats">Loading file...</div>
-
-    <table id="wordTable">
-        <thead>
-            <tr>
-                <th>Latin</th>
-                <th>German</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
+    <div class="container">
+        <h1>Latin Dictionary</h1>
+        <div id="status">Loading database...</div>
+        
+        <input type="text" id="searchInput" placeholder="Enter Latin word..." oninput="search()">
+        <div id="result"></div>
+    </div>
 
     <script>
+        let dictionary = [];
+
         fetch('words.csv')
             .then(response => response.text())
             .then(data => {
-                const status = document.getElementById('status');
-                const tableBody = document.getElementById('tableBody');
+                // 1. Remove hidden Byte Order Marks (BOM) and split by any newline format
+                const cleanData = data.replace(/^\uFEFF/, ''); 
+                const rows = cleanData.split(/\r?\n/).filter(row => row.trim() !== "");
                 
-                // 1. Clean data and split into rows
-                // This regex handles standard newlines and carriage returns better
-                const rows = data.replace(/^\uFEFF/, '').split(/\r\n|\n|\r/);
-                
-                let count = 0;
-
-                // 2. Loop through rows (skip the first header row if it exists)
-                rows.forEach((row, index) => {
-                    if (row.trim() === "" || index === 0) return; 
-
+                // 2. Map the data, trimming spaces from EVERY cell
+                dictionary = rows.slice(1).map(row => {
                     const columns = row.split(';');
-                    const latin = columns[0] ? columns[0].trim() : "";
-                    const german = columns[1] ? columns[1].trim() : "";
+                    return { 
+                        latin: columns[0] ? columns[0].trim().toLowerCase() : "", 
+                        german: columns[1] ? columns[1].trim() : "" 
+                    };
+                }).filter(item => item.latin !== "");
 
-                    if (latin || german) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="latin-col">${latin}</td>
-                            <td>${german}</td>
-                        `;
-                        tableBody.appendChild(tr);
-                        count++;
-                    }
-                });
-
-                status.innerText = `Successfully displayed ${count} words from your list.`;
+                document.getElementById('status').innerText = `${dictionary.length} words loaded. Ready!`;
             })
             .catch(err => {
-                document.getElementById('status').innerText = "Error loading words.csv. Check filename and GitHub upload.";
+                document.getElementById('status').innerText = "Error: Could not load words.csv";
                 console.error(err);
             });
+
+        function search() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const display = document.getElementById('result');
+            
+            if (query === "") {
+                display.innerHTML = "";
+                return;
+            }
+
+            // Using .find() but ensuring we compare trimmed strings
+            const match = dictionary.find(item => item.latin === query);
+
+            if (match) {
+                display.innerHTML = `German: <span class="german-text">${match.german}</span>`;
+            } else {
+                display.innerHTML = `<span style="color:red;">Not found</span>`;
+            }
+        }
     </script>
 </body>
 </html>
