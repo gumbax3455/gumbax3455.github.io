@@ -7,9 +7,11 @@
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f9; }
         .container { background: white; padding: 2rem; display: inline-block; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { padding: 12px; width: 250px; border: 2px solid #ddd; border-radius: 5px; }
-        #result { margin-top: 20px; font-size: 1.2rem; min-height: 1.5em; }
+        input { padding: 12px; width: 250px; border: 2px solid #ddd; border-radius: 5px; outline: none; }
+        input:focus { border-color: #007bff; }
+        #result { margin-top: 20px; font-size: 1.2rem; min-height: 1.5em; line-height: 1.6; }
         #status { font-size: 0.8rem; color: #888; margin-bottom: 10px; }
+        .latin-display { color: #007bff; font-weight: bold; font-style: italic; }
         .german-text { color: #2c3e50; font-weight: bold; }
     </style>
 </head>
@@ -19,28 +21,40 @@
         <h1>Latin Dictionary</h1>
         <div id="status">Loading database...</div>
         
-        <input type="text" id="searchInput" placeholder="Enter Latin word..." oninput="search()">
+        <input type="text" id="searchInput" placeholder="Search (e.g. 'amare' or 'amāre')" oninput="search()">
         <div id="result"></div>
     </div>
 
     <script>
         let dictionary = [];
 
+        // Function to strip macrons and accents for searching
+        function simplifyLatin(text) {
+            return text.toLowerCase()
+                .replace(/ā/g, 'a')
+                .replace(/ē/g, 'e')
+                .replace(/ī/g, 'i')
+                .replace(/ō/g, 'o')
+                .replace(/ū/g, 'u')
+                .replace(/ȳ/g, 'y')
+                .trim();
+        }
+
         fetch('words.csv')
             .then(response => response.text())
             .then(data => {
-                // 1. Remove hidden Byte Order Marks (BOM) and split by any newline format
                 const cleanData = data.replace(/^\uFEFF/, ''); 
                 const rows = cleanData.split(/\r?\n/).filter(row => row.trim() !== "");
                 
-                // 2. Map the data, trimming spaces from EVERY cell
                 dictionary = rows.slice(1).map(row => {
                     const columns = row.split(';');
+                    const originalLatin = columns[0] ? columns[0].trim() : "";
                     return { 
-                        latin: columns[0] ? columns[0].trim().toLowerCase() : "", 
+                        displayLatin: originalLatin,            // Keeps macrons for display
+                        searchLatin: simplifyLatin(originalLatin), // Simplified for searching
                         german: columns[1] ? columns[1].trim() : "" 
                     };
-                }).filter(item => item.latin !== "");
+                }).filter(item => item.displayLatin !== "");
 
                 document.getElementById('status').innerText = `${dictionary.length} words loaded. Ready!`;
             })
@@ -50,7 +64,7 @@
             });
 
         function search() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const query = simplifyLatin(document.getElementById('searchInput').value);
             const display = document.getElementById('result');
             
             if (query === "") {
@@ -58,11 +72,14 @@
                 return;
             }
 
-            // Using .find() but ensuring we compare trimmed strings
-            const match = dictionary.find(item => item.latin === query);
+            // We search against the "searchLatin" version
+            const match = dictionary.find(item => item.searchLatin === query);
 
             if (match) {
-                display.innerHTML = `German: <span class="german-text">${match.german}</span>`;
+                display.innerHTML = `
+                    <span class="latin-display">${match.displayLatin}</span><br>
+                    German: <span class="german-text">${match.german}</span>
+                `;
             } else {
                 display.innerHTML = `<span style="color:red;">Not found</span>`;
             }
