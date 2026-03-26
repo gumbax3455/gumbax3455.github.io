@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latin Learning Hub</title>
+    <title>Wörterbuch</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f9; color: #333; }
         .container { background: white; padding: 2rem; display: inline-block; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 90%; max-width: 500px; }
         
-        /* The Search Input */
         input { 
             padding: 12px; 
             width: 100%; 
@@ -23,7 +22,6 @@
         
         #status { font-size: 0.8rem; color: #888; margin-bottom: 20px; }
         
-        /* Results Styling */
         .result-item { text-align: left; padding: 12px; border-bottom: 1px solid #eee; transition: background 0.2s; }
         .result-item:hover { background-color: #f8f9fa; }
         .result-item:last-child { border-bottom: none; }
@@ -35,12 +33,12 @@
 <body>
 
     <div class="container">
-        <h1>Latin Dictionary</h1>
-        <div id="status">Loading database...</div>
+        <h1>Wörterbuch</h1>
+        <div id="status">Wird geladen...</div>
         
         <input type="text" 
                id="searchInput" 
-               placeholder="Search (e.g. 'ama')..." 
+               placeholder="Suche (z. B. 'amare')..." 
                oninput="search()" 
                onfocus="this.select()"
                autocomplete="off">
@@ -51,7 +49,7 @@
     <script>
         let dictionary = [];
 
-        // Strips macrons for searching
+        // Removes macrons for the search logic
         function simplifyLatin(text) {
             if (!text) return "";
             return text.toLowerCase()
@@ -80,25 +78,24 @@
                     };
                 }).filter(item => item.displayLatin !== "");
 
+                // Counter remains in English as requested
                 document.getElementById('status').innerText = `${dictionary.length} words loaded.`;
             })
             .catch(err => {
-                document.getElementById('status').innerText = "Error loading CSV.";
+                document.getElementById('status').innerText = "Fehler beim Laden der CSV.";
             });
 
         function search() {
             const query = simplifyLatin(document.getElementById('searchInput').value);
             const display = document.getElementById('result');
             
-            // Clear results if input is empty
             if (query.length === 0) {
                 display.innerHTML = "";
                 return;
             }
 
-            // Only show results if user typed at least 2 characters
             if (query.length < 2) {
-                display.innerHTML = "<small style='color:#999'>Keep typing...</small>";
+                display.innerHTML = "<small style='color:#999'>Bitte weiter tippen...</small>";
                 return;
             }
 
@@ -115,12 +112,12 @@
                 `).join('');
 
                 if (matches.length > 15) {
-                    html += `<div style="padding:10px; font-size:0.75rem; color:#888;">+ ${matches.length - 15} more matches.</div>`;
+                    html += `<div style="padding:10px; font-size:0.75rem; color:#888;">+ ${matches.length - 15} weitere Treffer.</div>`;
                 }
                 
                 display.innerHTML = html;
             } else {
-                display.innerHTML = `<div class="no-results">No matches for "${query}"</div>`;
+                display.innerHTML = `<div class="no-results">Keine Treffer für "${query}" gefunden.</div>`;
             }
         }
     </script>
