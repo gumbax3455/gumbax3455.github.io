@@ -1,0 +1,72 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: sans-serif;
+    background-color: #f4f4f9;
+}
+
+/* Three-column layout */
+.main-layout {
+    display: grid;
+    grid-template-columns: 15% 70% 15%;
+    height: 100vh;
+}
+
+/* Side Zones (The "Outside" areas) */
+.side-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: #e9e9f0;
+    transition: background 0.3s, color 0.3s;
+    color: #aaa;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.side-zone:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Center Content */
+.center-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 50px;
+    overflow-y: auto;
+}
+
+.container {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 500px;
+}
+
+input { 
+    padding: 12px; 
+    width: 100%; 
+    border: 2px solid #ddd; 
+    border-radius: 5px; 
+    box-sizing: border-box; 
+    outline: none; 
+    margin-bottom: 10px; 
+    font-size: 16px;
+}
+
+input:focus { border-color: #007bff; }
+
+#status { font-size: 0.8rem; color: #888; margin-bottom: 20px; text-align: center; }
+
+/* Result Styling */
+.result-item { text-align: left; padding: 12px; border-bottom: 1px solid #eee; position: relative; }
+.latin-display { color: #007bff; font-weight: bold; font-size: 1.1rem; }
+.german-text { color: #2c3e50; margin-left: 5px; }
+.match-score { position: absolute; right: 10px; top: 15px; font-size: 0.7rem; color: #ccc; }
+.no-results { color: #a94442; margin-top: 20px; font-size: 0.9rem; text-align: center; }
