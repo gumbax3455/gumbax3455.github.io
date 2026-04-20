@@ -2,23 +2,20 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karteikarten - Latin Hub</title>
+    <title>Karteikarten</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="flashcard-mode">
-
-    <button class="back-btn" onclick="window.location.href='index.html'">✕ Schließen</button>
+    <button class="back-btn" onclick="window.location.href='index.html'">← Zurück</button>
 
     <div class="card-stack">
-        <div class="card" id="flashcard" onclick="this.classList.toggle('is-flipped'); showControls()">
+        <div class="card" id="flashcard" onclick="flipCard()">
             <div class="card-face card-front">
-                <h2 id="wordFront">...</h2>
-                <p>Latein</p>
+                <h2 id="wordFront">Lade...</h2>
+                <p style="color:#aaa; margin-top:10px;">Klicken zum Umdrehen</p>
             </div>
             <div class="card-face card-back">
                 <h2 id="wordBack">...</h2>
-                <p>Deutsch</p>
             </div>
         </div>
     </div>

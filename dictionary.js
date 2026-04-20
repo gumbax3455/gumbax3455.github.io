@@ -64,7 +64,6 @@ function search() {
         display.innerHTML = "<small style='color:#999'>Bitte weiter tippen...</small>";
         return;
     }
-
     const results = dictionary.map(item => {
         let score = 0;
         const dist = getLevenshteinDistance(query, item.searchLatin);
@@ -80,15 +79,16 @@ function search() {
 
     results.sort((a, b) => b.score - a.score);
 
+        // ... inside your search() function ...
     if (results.length > 0) {
         display.innerHTML = results.slice(0, 15).map(match => `
             <div class="result-item">
-                <span class="latin-display">${match.displayLatin}</span>: 
-                <span class="german-text">${match.german}</span>
+                <span class="latin-display">${match.displayLatin}</span> 
+                <span class="german-text">: ${match.german}</span>
                 <span class="match-score">${match.score}%</span>
             </div>
         `).join('');
     } else {
-        display.innerHTML = `<div class="no-results">Keine Treffer für "${query}"</div>`;
+        display.innerHTML = `<div class="no-results">Keine Treffer gefunden.</div>`;
     }
 }

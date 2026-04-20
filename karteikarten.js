@@ -41,8 +41,10 @@ function displayCard() {
     document.getElementById('controls').classList.add('hidden');
 }
 
-function showControls() {
-    // Only show the next button once the user has flipped the card
+function flipCard() {
+    const card = document.getElementById('flashcard');
+    card.classList.add('is-flipped');
+    // Show controls immediately
     document.getElementById('controls').classList.remove('hidden');
 }
 
