@@ -1,88 +1,86 @@
+/* Reset basic spacing */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body, html {
+/* Ensure the screen is always full height */
+html, body {
     height: 100%;
     width: 100%;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden; /* Prevents unwanted scrolling */
+    font-family: sans-serif;
 }
 
-/* Background Split */
-.background-split {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    position: absolute;
+/* 1. THE BACKGROUND: Fixed to the screen, split 50/50 */
+.bg-layer {
+    position: fixed;
     top: 0;
     left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Exactly half/half */
     z-index: 1;
 }
 
-.section {
-    flex: 1; /* Takes up exactly 50% */
+.side {
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: filter 0.3s ease;
+    transition: background 0.3s;
 }
 
-.section-content h2 {
-    font-size: 3rem;
-    color: rgba(255, 255, 255, 0.4);
+.grammar { background-color: #2c3e50; }
+.cards { background-color: #34495e; }
+
+.side h2 {
+    font-size: clamp(2rem, 5vw, 4rem); /* Responsive font size */
+    color: rgba(255, 255, 255, 0.2);
     text-transform: uppercase;
-    letter-spacing: 5px;
 }
 
-/* Different colors for the sides */
-.grammar {
-    background-color: #2c3e50;
+.side:hover {
+    filter: brightness(1.1);
 }
 
-.cards {
-    background-color: #34495e;
+.side:hover h2 {
+    color: rgba(255, 255, 255, 0.7);
 }
 
-.section:hover {
-    filter: brightness(1.2);
-}
-
-.section:hover h2 {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-/* Dictionary Overlay (The "Hovering" Box) */
-.dictionary-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* This centers it perfectly */
+/* 2. THE DICTIONARY: Centered on top of the background */
+.dict-wrapper {
+    position: relative;
     z-index: 10;
-    width: 90%;
-    max-width: 500px;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; /* Allows clicking "through" the empty space to the background */
 }
 
 .container {
     background: white;
     padding: 2.5rem;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Strong shadow for the hovering effect */
-    text-align: center; /* Centers the "Wörterbuch" text and everything inside */
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    width: 90%;
+    max-width: 500px;
+    text-align: center; /* Centers "Wörterbuch" and content */
+    pointer-events: auto; /* Re-enables clicking inside the dictionary */
 }
 
+/* Text and Input alignment */
 h1 {
-    margin-bottom: 0.5rem;
-    color: #333;
+    margin-bottom: 5px;
+    font-size: 2rem;
 }
 
 #status {
     font-size: 0.8rem;
     color: #888;
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
 }
 
 input { 
@@ -92,37 +90,21 @@ input {
     border-radius: 8px; 
     outline: none; 
     font-size: 18px;
-    transition: border-color 0.3s;
 }
 
-input:focus { 
-    border-color: #007bff; 
-}
+input:focus { border-color: #007bff; }
 
-/* Result List Styling */
 #result {
-    max-height: 300px; /* Allows scrolling inside the result box */
+    max-height: 250px;
     overflow-y: auto;
     margin-top: 15px;
+    text-align: left; /* Keep results left-aligned for readability */
 }
 
 .result-item {
-    text-align: left;
-    padding: 12px;
+    padding: 10px;
     border-bottom: 1px solid #eee;
 }
 
-.latin-display {
-    color: #007bff;
-    font-weight: bold;
-}
-
-.german-text {
-    color: #555;
-}
-
-.match-score {
-    float: right;
-    font-size: 0.7rem;
-    color: #ccc;
-}
+.latin-display { color: #007bff; font-weight: bold; }
+.match-score { float: right; font-size: 0.7rem; color: #ccc; }
