@@ -1,110 +1,37 @@
-/* Reset basic spacing */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* --- GLOBAL STYLES --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
 
-/* Ensure the screen is always full height */
-html, body {
-    height: 100%;
-    width: 100%;
-    font-family: sans-serif;
-}
+/* --- HUB / INDEX STYLES --- */
+.bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: grid; grid-template-columns: 1fr 1fr; z-index: 1; }
+.side { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+.grammar { background-color: #1a1a1a; } /* Darker, modern slate */
+.cards { background-color: #2a2a2a; }
+.side h2 { font-size: 2.5rem; color: rgba(255, 255, 255, 0.15); text-transform: uppercase; letter-spacing: 4px; }
+.side:hover h2 { color: white; }
 
-/* 1. THE BACKGROUND: Fixed to the screen, split 50/50 */
-.bg-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Exactly half/half */
-    z-index: 1;
-}
+.dict-wrapper { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.container { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); width: 90%; max-width: 500px; text-align: center; pointer-events: auto; }
 
-.side {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.3s;
-}
+/* --- FLASHCARD SPECIFIC STYLES --- */
+.flashcard-mode { background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
 
-.grammar { background-color: #2c3e50; }
-.cards { background-color: #34495e; }
+.back-btn { position: absolute; top: 30px; left: 30px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #888; transition: 0.2s; }
+.back-btn:hover { color: #000; }
 
-.side h2 {
-    font-size: clamp(2rem, 5vw, 4rem); /* Responsive font size */
-    color: rgba(255, 255, 255, 0.2);
-    text-transform: uppercase;
-}
+.card-stack { width: 90%; max-width: 550px; height: 400px; perspective: 1200px; }
+.card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; cursor: pointer; }
+.card.is-flipped { transform: rotateY(180deg); }
 
-.side:hover {
-    filter: brightness(1.1);
-}
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #f0f0f0; background: white; }
+.card-back { transform: rotateY(180deg); background: #fcfcfc; }
 
-.side:hover h2 {
-    color: rgba(255, 255, 255, 0.7);
-}
+.card-face h2 { font-size: 3.5rem; font-weight: 700; color: #1d1d1f; margin-bottom: 10px; }
+.card-face p { color: #86868b; font-size: 1rem; }
 
-/* 2. THE DICTIONARY: Centered on top of the background */
-.dict-wrapper {
-    position: relative;
-    z-index: 10;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none; /* Allows clicking "through" the empty space to the background */
-}
+/* Action Buttons */
+.controls { margin-top: 40px; display: flex; gap: 20px; min-height: 60px; transition: 0.3s; }
+.hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
 
-.container {
-    background: white;
-    padding: 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-    width: 90%;
-    max-width: 500px;
-    text-align: center; /* Centers "Wörterbuch" and content */
-    pointer-events: auto; /* Re-enables clicking inside the dictionary */
-}
-
-/* Text and Input alignment */
-h1 {
-    margin-bottom: 5px;
-    font-size: 2rem;
-}
-
-#status {
-    font-size: 0.8rem;
-    color: #888;
-    margin-bottom: 20px;
-}
-
-input { 
-    padding: 15px; 
-    width: 100%; 
-    border: 2px solid #ddd; 
-    border-radius: 8px; 
-    outline: none; 
-    font-size: 18px;
-}
-
-input:focus { border-color: #007bff; }
-
-#result {
-    max-height: 250px;
-    overflow-y: auto;
-    margin-top: 15px;
-    text-align: left; /* Keep results left-aligned for readability */
-}
-
-.result-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.latin-display { color: #007bff; font-weight: bold; }
-.match-score { float: right; font-size: 0.7rem; color: #ccc; }
+.btn-next { padding: 16px 40px; border-radius: 100px; border: none; background: #0071e3; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn-next:hover { background: #0077ed; transform: scale(1.05); }
