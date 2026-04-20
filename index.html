@@ -3,32 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latin Learning Hub</title>
+    <title>Latein Hub</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="main-layout">
-        <div class="side-zone left" onclick="window.location.href='grammar.html'">
-            <span>Grammatik</span>
-        </div>
-
-        <div class="center-zone">
-            <div class="container">
-                <h1>Wörterbuch</h1>
-                <div id="status">Wird geladen...</div>
-                
-                <input type="text" 
-                       id="searchInput" 
-                       placeholder="Suche (z. B. 'amare')..." 
-                       autocomplete="off">
-                       
-                <div id="result"></div>
+    <div class="background-split">
+        <div class="section grammar" onclick="window.location.href='grammatik.html'">
+            <div class="section-content">
+                <h2>Grammatik</h2>
             </div>
         </div>
+        <div class="section cards" onclick="window.location.href='karteikarten.html'">
+            <div class="section-content">
+                <h2>Karteikarten</h2>
+            </div>
+        </div>
+    </div>
 
-        <div class="side-zone right" onclick="window.location.href='culture.html'">
-            <span>Kultur & Geschichte</span>
+    <div class="dictionary-overlay">
+        <div class="container">
+            <h1>Wörterbuch</h1>
+            <div id="status">Wird geladen...</div>
+            
+            <input type="text" 
+                   id="searchInput" 
+                   placeholder="Suche (z. B. 'amare')..." 
+                   autocomplete="off">
+                   
+            <div id="result"></div>
         </div>
     </div>
 

@@ -1,72 +1,128 @@
-body, html {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
     height: 100%;
-    font-family: sans-serif;
-    background-color: #f4f4f9;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden; /* Prevents unwanted scrolling */
 }
 
-/* Three-column layout */
-.main-layout {
-    display: grid;
-    grid-template-columns: 15% 70% 15%;
+/* Background Split */
+.background-split {
+    display: flex;
+    width: 100vw;
     height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
 }
 
-/* Side Zones (The "Outside" areas) */
-.side-zone {
+.section {
+    flex: 1; /* Takes up exactly 50% */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    background-color: #e9e9f0;
-    transition: background 0.3s, color 0.3s;
-    color: #aaa;
-    font-weight: bold;
+    transition: filter 0.3s ease;
+}
+
+.section-content h2 {
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.4);
     text-transform: uppercase;
+    letter-spacing: 5px;
 }
 
-.side-zone:hover {
-    background-color: #007bff;
-    color: white;
+/* Different colors for the sides */
+.grammar {
+    background-color: #2c3e50;
 }
 
-/* Center Content */
-.center-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 50px;
-    overflow-y: auto;
+.cards {
+    background-color: #34495e;
 }
 
-.container {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+.section:hover {
+    filter: brightness(1.2);
+}
+
+.section:hover h2 {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Dictionary Overlay (The "Hovering" Box) */
+.dictionary-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* This centers it perfectly */
+    z-index: 10;
     width: 90%;
     max-width: 500px;
 }
 
-input { 
-    padding: 12px; 
-    width: 100%; 
-    border: 2px solid #ddd; 
-    border-radius: 5px; 
-    box-sizing: border-box; 
-    outline: none; 
-    margin-bottom: 10px; 
-    font-size: 16px;
+.container {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Strong shadow for the hovering effect */
+    text-align: center; /* Centers the "Wörterbuch" text and everything inside */
 }
 
-input:focus { border-color: #007bff; }
+h1 {
+    margin-bottom: 0.5rem;
+    color: #333;
+}
 
-#status { font-size: 0.8rem; color: #888; margin-bottom: 20px; text-align: center; }
+#status {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 1.5rem;
+}
 
-/* Result Styling */
-.result-item { text-align: left; padding: 12px; border-bottom: 1px solid #eee; position: relative; }
-.latin-display { color: #007bff; font-weight: bold; font-size: 1.1rem; }
-.german-text { color: #2c3e50; margin-left: 5px; }
-.match-score { position: absolute; right: 10px; top: 15px; font-size: 0.7rem; color: #ccc; }
-.no-results { color: #a94442; margin-top: 20px; font-size: 0.9rem; text-align: center; }
+input { 
+    padding: 15px; 
+    width: 100%; 
+    border: 2px solid #ddd; 
+    border-radius: 8px; 
+    outline: none; 
+    font-size: 18px;
+    transition: border-color 0.3s;
+}
+
+input:focus { 
+    border-color: #007bff; 
+}
+
+/* Result List Styling */
+#result {
+    max-height: 300px; /* Allows scrolling inside the result box */
+    overflow-y: auto;
+    margin-top: 15px;
+}
+
+.result-item {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.latin-display {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.german-text {
+    color: #555;
+}
+
+.match-score {
+    float: right;
+    font-size: 0.7rem;
+    color: #ccc;
+}
