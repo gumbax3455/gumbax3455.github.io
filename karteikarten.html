@@ -2,26 +2,38 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Karteikarten</title>
+    <title>Lernen - Latin Hub</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="flashcard-mode">
-    <button class="back-btn" onclick="window.location.href='index.html'">← Zurück</button>
 
-    <div class="card-stack">
-        <div class="card" id="flashcard" onclick="flipCard()">
-            <div class="card-face card-front">
-                <h2 id="wordFront">Lade...</h2>
-                <p style="color:#aaa; margin-top:10px;">Klicken zum Umdrehen</p>
-            </div>
-            <div class="card-face card-back">
-                <h2 id="wordBack">...</h2>
-            </div>
+    <button class="back-btn" style="position:fixed; top:20px; left:20px; z-index:100;" onclick="handleBack()">← Zurück</button>
+
+    <div id="menu-view">
+        <h1>Was möchtest du lernen?</h1>
+        <div class="chapter-list">
+            <button class="chapter-btn omnireview-btn" onclick="startSession('all')">Omnireview (Alles)</button>
+            <div id="chapter-buttons">
+                </div>
         </div>
     </div>
 
-    <div class="controls hidden" id="controls">
-        <button class="btn-next" onclick="nextCard()">Nächste Karte →</button>
+    <div id="session-view" class="hidden">
+        <div class="card-stack">
+            <div class="card" id="flashcard" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <h2 id="wordFront">Lade...</h2>
+                    <p style="color:#aaa; margin-top:15px; font-size: 0.8rem;">Klicken zum Umdrehen</p>
+                </div>
+                <div class="card-face card-back">
+                    <h2 id="wordBack">...</h2>
+                    <div id="merkhilfe-container" class="merkhilfe"></div>
+                </div>
+            </div>
+        </div>
+        <div class="controls hidden" id="controls">
+            <button class="btn-next" onclick="nextCard()">Nächste Karte →</button>
+        </div>
     </div>
 
     <script src="karteikarten.js"></script>
