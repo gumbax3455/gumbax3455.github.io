@@ -1,35 +1,42 @@
-let allChapters = {}; // Structure: { "Lektio 1": [words...], "Lektio 2": [words...] }
+let allChapters = {}; 
 let currentDeck = [];
 let currentIndex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Note: Change 'words.csv' to your new dedicated database filename if it's different
+    // IMPORTANT: GitHub is case-sensitive. Ensure your file is named exactly 'words.csv'
     fetch('words.csv')
         .then(response => response.text())
         .then(csvText => {
+            // Error check: If it looks like HTML, it's probably a 404 page
+            if (csvText.trim().startsWith("<!DOCTYPE") || csvText.includes("404")) {
+                document.getElementById('chapter-buttons').innerHTML = 
+                    "<p style='color:red;'>FEHLER: 'words.csv' wurde auf dem Server nicht gefunden (404).<br>Prüfe, ob der Dateiname klein geschrieben ist!</p>";
+                return;
+            }
+
             const cleanData = csvText.replace(/^\uFEFF/, '');
             const rows = cleanData.split(/\r?\n/).filter(row => row.trim() !== "");
             
-            let currentChapterName = "Unkategorisiert";
+            let currentChapterName = "Unbekannt";
             
-            rows.slice(1).forEach(row => {
+            rows.forEach(row => {
                 const cols = row.split(';');
-                const col1 = cols[0] ? cols[0].trim() : "";
-                const col2 = cols[1] ? cols[1].trim() : "";
-                const col3 = cols[2] ? cols[2].trim() : "";
+                const col1 = (cols[0] || "").trim();
+                const col2 = (cols[1] || "").trim();
+                const col3 = (cols[2] || "").trim();
 
-                // Detect Chapter Separator (e.g., "Lektio 1")
+                // Detect Chapter (e.g. "Lektio 1")
                 if (col1.toLowerCase().includes("lektio")) {
                     currentChapterName = col1;
                     if (!allChapters[currentChapterName]) allChapters[currentChapterName] = [];
                 } 
-                // Regular Word
-                else if (col1 !== "") {
+                // Regular word: must have Latin (col1) and German (col2)
+                else if (col1 !== "" && col2 !== "") {
                     if (!allChapters[currentChapterName]) allChapters[currentChapterName] = [];
                     allChapters[currentChapterName].push({
                         latin: col1,
                         german: col2,
-                        mnemonic: col3
+                        mnemonic: col3 // This is your 3rd column
                     });
                 }
             });
@@ -42,43 +49,35 @@ function renderMenu() {
     const container = document.getElementById('chapter-buttons');
     container.innerHTML = "";
     
-    Object.keys(allChapters).forEach(chapter => {
+    Object.keys(allChapters).forEach(name => {
         const btn = document.createElement('button');
         btn.className = 'chapter-btn';
-        btn.innerText = `${chapter} (${allChapters[chapter].length} Wörter)`;
-        btn.onclick = () => startSession(chapter);
+        btn.innerHTML = `<span>${name}</span> <span style="opacity:0.4; font-size:0.8rem;">${allChapters[name].length} Karten</span>`;
+        btn.onclick = () => startSession(name);
         container.appendChild(btn);
     });
 }
 
 function startSession(mode) {
-    if (mode === 'all') {
-        currentDeck = Object.values(allChapters).flat();
-    } else {
-        currentDeck = [...allChapters[mode]];
-    }
-
+    currentDeck = (mode === 'all') ? Object.values(allChapters).flat() : [...allChapters[mode]];
     shuffle(currentDeck);
     currentIndex = 0;
-    
     document.getElementById('menu-view').classList.add('hidden');
     document.getElementById('session-view').classList.remove('hidden');
     displayCard();
 }
 
 function displayCard() {
-    if (currentDeck.length === 0) return;
-    
     const card = currentDeck[currentIndex];
     document.getElementById('wordFront').innerText = card.latin;
     document.getElementById('wordBack').innerText = card.german;
     
-    const mContainer = document.getElementById('merkhilfe-container');
-    if (card.mnemonic) {
-        mContainer.innerText = "Merkhilfe: " + card.mnemonic;
-        mContainer.classList.remove('hidden');
+    const mBox = document.getElementById('merkhilfe-container');
+    if (card.mnemonic && card.mnemonic !== "-") {
+        mBox.innerText = card.mnemonic;
+        mBox.classList.remove('hidden');
     } else {
-        mContainer.classList.add('hidden');
+        mBox.classList.add('hidden');
     }
     
     document.getElementById('flashcard').classList.remove('is-flipped');
@@ -95,9 +94,9 @@ function nextCard() {
     if (currentIndex >= currentDeck.length) {
         alert("Lektion beendet!");
         handleBack();
-        return;
+    } else {
+        displayCard();
     }
-    displayCard();
 }
 
 function handleBack() {
@@ -109,9 +108,9 @@ function handleBack() {
     }
 }
 
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+        [a[i], a[j]] = [a[j], a[i]];
     }
 }

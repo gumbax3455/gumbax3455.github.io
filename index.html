@@ -2,35 +2,23 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Latein Hub</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="bg-layer">
-        <div class="side grammar" onclick="window.location.href='grammatik.html'">
-            <h2>Grammatik</h2>
-        </div>
-        <div class="side cards" onclick="window.location.href='karteikarten.html'">
-            <h2>Karteikarten</h2>
-        </div>
+        <div class="side grammar" onclick="alert('Grammatik folgt bald!')"><h2>Grammatik</h2></div>
+        <div class="side cards" onclick="window.location.href='karteikarten.html'"><h2>Karteikarten</h2></div>
     </div>
 
     <div class="dict-wrapper">
         <div class="container">
             <h1>Wörterbuch</h1>
             <div id="status">Wird geladen...</div>
-            
-            <input type="text" 
-                   id="searchInput" 
-                   placeholder="Suche (z. B. 'amare')..." 
-                   autocomplete="off">
-                   
+            <input type="text" id="searchInput" placeholder="Suche..." autocomplete="off">
             <div id="result"></div>
         </div>
     </div>
-
     <script src="dictionary.js"></script>
 </body>
 </html>
