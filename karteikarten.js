@@ -14,13 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const cleanData = csvText.replace(/^\uFEFF/, '');
-            const rows = cleanData.split(/\r?\n/).filter(row => row.trim() !== "");
+            const rows = parseCsv(csvText, ';');
             
             let currentChapterName = "Unbekannt";
             
-            rows.forEach(row => {
-                const cols = row.split(';');
+            rows.forEach(cols => {
                 const col1 = (cols[0] || "").trim();
                 const col2 = (cols[1] || "").trim();
                 const col3 = (cols[2] || "").trim();

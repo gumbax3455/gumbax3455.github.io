@@ -8,18 +8,20 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('words.csv')
         .then(response => response.text())
         .then(data => {
-            const cleanData = data.replace(/^\uFEFF/, ''); 
-            const rows = cleanData.split(/\r?\n/).filter(row => row.trim() !== "");
-            
-            dictionary = rows.slice(1).map(row => {
-                const columns = row.split(';');
+            const rows = parseCsv(data, ';');
+
+            dictionary = rows.map(columns => {
                 const originalLatin = columns[0] ? columns[0].trim() : "";
+                const german = columns[1] ? columns[1].trim() : "";
                 return { 
                     displayLatin: originalLatin,
                     searchLatin: simplifyLatin(originalLatin),
-                    german: columns[1] ? columns[1].trim() : "" 
+                    german
                 };
-            }).filter(item => item.displayLatin !== "");
+            }).filter(item => {
+                if (!item.displayLatin || !item.german) return false;
+                return !item.displayLatin.toLowerCase().includes('lektion');
+            });
 
             document.getElementById('status').innerText = `${dictionary.length} words loaded.`;
         });

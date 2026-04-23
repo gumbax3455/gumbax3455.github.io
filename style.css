@@ -1,26 +1,26 @@
 /* --- UNIVERSAL & LAYOUT --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body, html { height: 100%; width: 100%; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; background: #f4f7f6; }
+body, html { height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; overflow: hidden; background: #f5f7fb; color: #1a1a1a; }
 
 /* 50/50 Hub Background */
 .bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: grid; grid-template-columns: 1fr 1fr; z-index: 1; }
-.side { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; border: none; outline: none; }
+.side { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: filter 0.2s ease; border: none; outline: none; }
 .grammar { background-color: #2c3e50; }
 .cards { background-color: #34495e; }
-.side h2 { font-size: 2.5rem; color: rgba(255, 255, 255, 0.2); text-transform: uppercase; letter-spacing: 3px; }
+.side h2 { font-size: clamp(1.9rem, 2.7vw, 2.7rem); color: rgba(255, 255, 255, 0.2); text-transform: uppercase; letter-spacing: 2.5px; }
 .side:hover { filter: brightness(1.2); }
 .side:hover h2 { color: white; }
 
 /* Dictionary (The Hovering Command Center) */
 .dict-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
 .container { 
-    background: white; padding: 2.5rem; border-radius: 20px; 
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3); width: 90%; max-width: 500px; 
+    background: white; padding: clamp(1.4rem, 3vw, 2.2rem); border-radius: 20px;
+    box-shadow: 0 16px 36px rgba(11, 33, 66, 0.16); width: 92%; max-width: 560px;
     text-align: center; pointer-events: auto; 
 }
-h1 { margin-bottom: 5px; color: #333; font-size: 1.8rem; }
+h1 { margin-bottom: 6px; color: #222; font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 650; letter-spacing: -0.01em; }
 #status { font-size: 0.75rem; color: #999; margin-bottom: 20px; }
-input { padding: 15px; width: 100%; border: 2px solid #eee; border-radius: 12px; font-size: 18px; outline: none; transition: 0.2s; }
+input { padding: 13px 15px; width: 100%; border: 1px solid #dfe5ee; border-radius: 12px; font-size: 17px; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); }
 
 /* Dictionary Results (RESTORED) */
@@ -31,15 +31,15 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
 .match-score { float: right; font-size: 0.7rem; color: #ccc; }
 
 /* --- FLASHCARD MODE --- */
-.flashcard-mode { background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow-y: auto; }
-.back-btn { position: fixed; top: 30px; left: 30px; padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 10px; cursor: pointer; z-index: 100; }
+.flashcard-mode { background-color: #f8fafe; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh; overflow-y: auto; padding: 100px 18px 28px; }
+.back-btn { position: fixed; top: 20px; left: 20px; padding: 9px 16px; border: 1px solid #d9e2ef; background: #fff; border-radius: 10px; cursor: pointer; z-index: 100; font-weight: 550; color: #233047; }
 
 /* Menu Styles */
-#menu-view { width: 90%; max-width: 600px; text-align: center; padding-top: 50px; }
+#menu-view { width: min(92vw, 620px); text-align: center; }
 .chapter-list { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 30px; }
 .chapter-btn { 
-    padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 15px; 
-    font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: 0.2s; text-align: left;
+    padding: 17px 18px; background: white; border: 1px solid #e1e7f0; border-radius: 14px;
+    font-weight: 600; font-size: 1.02rem; cursor: pointer; transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; text-align: left;
     display: flex; justify-content: space-between; align-items: center;
 }
 .chapter-btn:hover { border-color: #007bff; color: #007bff; background: #f8fbff; }
@@ -47,24 +47,50 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
 .omnireview-btn:hover { background: #0062c3; color: white; }
 
 /* Card Styles */
-.card-stack { width: 90%; max-width: 550px; height: 400px; perspective: 1000px; }
-.card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; cursor: pointer; }
-.card.is-flipped { transform: rotateY(180deg); }
+.card-stack { width: min(92vw, 760px); margin: 0 auto; }
+.card { width: 100%; cursor: pointer; }
 .card-face { 
-    position: absolute; width: 100%; height: 100%; backface-visibility: hidden; 
-    border-radius: 30px; display: flex; flex-direction: column; align-items: center; 
-    justify-content: center; padding: 40px; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; 
+    width: 100%;
+    min-height: clamp(260px, 46vh, 430px);
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 24px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: clamp(22px, 5vw, 44px);
+    background: #fff;
+    box-shadow: 0 14px 32px rgba(20, 40, 80, 0.08);
+    border: 1px solid #e7edf6;
+    text-align: center;
 }
-.card-front h2 { font-size: 3.5rem; color: #1a1a1a; }
-.card-back { transform: rotateY(180deg); background: #fafafa; border: 2px solid #007bff; }
-.card-back h2 { font-size: 3rem; color: #007bff; margin-bottom: 20px; }
+.card:not(.is-flipped) .card-front { display: flex; }
+.card.is-flipped .card-back { display: flex; }
+.card-front h2, .card-back h2 {
+    font-size: clamp(1.75rem, 5vw, 3.1rem);
+    line-height: 1.14;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+.card-front h2 { color: #1f2633; font-weight: 670; letter-spacing: -0.01em; }
+.card-back { background: #fcfdff; border: 1px solid #cfe0ff; }
+.card-back h2 { color: #0066d6; margin-bottom: 2px; font-weight: 700; }
 
 /* Merkhilfe (Mnemonic) */
 .merkhilfe { 
-    background: #eef6ff; color: #555; padding: 15px 25px; border-radius: 15px; 
-    font-size: 0.95rem; line-height: 1.4; border-left: 4px solid #007bff; max-width: 80%;
+    background: #eef5ff; color: #445063; padding: 13px 18px; border-radius: 14px;
+    font-size: 0.98rem; line-height: 1.5; border-left: 3px solid #007bff; max-width: min(100%, 620px);
+    overflow-wrap: anywhere; hyphens: auto;
 }
 
-.controls { margin-top: 40px; }
-.btn-next { padding: 18px 50px; border-radius: 100px; border: none; background: #1a1a1a; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+.controls { margin-top: 26px; margin-bottom: 8px; }
+.btn-next { padding: 15px 36px; border-radius: 999px; border: none; background: #1f2430; color: white; font-weight: 650; font-size: 1.02rem; cursor: pointer; }
 .hidden { display: none !important; }
+
+@media (max-width: 700px) {
+    .flashcard-mode { padding: 88px 14px 20px; }
+    .card-face { min-height: clamp(230px, 44vh, 360px); max-height: 68vh; border-radius: 20px; }
+    .btn-next { width: 100%; max-width: 360px; }
+}
