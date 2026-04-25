@@ -11,8 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const rows = parseCsv(data, ';');
 
             dictionary = rows.map(columns => {
-                const originalLatin = columns[0] ? columns[0].trim() : "";
-                const german = columns[1] ? columns[1].trim() : "";
+                const hasCardId = /^c\d{2}-\d{3}$/i.test((columns[0] || "").trim());
+                const latinIndex = hasCardId ? 1 : 0;
+                const germanIndex = hasCardId ? 2 : 1;
+                const originalLatin = columns[latinIndex] ? columns[latinIndex].trim() : "";
+                const german = columns[germanIndex] ? columns[germanIndex].trim() : "";
                 return { 
                     displayLatin: originalLatin,
                     searchLatin: simplifyLatin(originalLatin),

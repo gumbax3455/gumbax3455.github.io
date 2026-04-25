@@ -11,6 +11,15 @@
 
     <div id="menu-view">
         <h1>Was möchtest du lernen?</h1>
+        <div id="deck-overview" class="deck-overview">
+            <h2 id="overview-title">Alle Lektionen</h2>
+            <div class="overview-grid">
+                <div class="overview-item"><span>Gesamt</span><strong id="overview-total">0</strong></div>
+                <div class="overview-item overview-new"><span>Neu</span><strong id="overview-new">0</strong></div>
+                <div class="overview-item overview-due"><span>Faellig/Problem</span><strong id="overview-due">0</strong></div>
+                <div class="overview-item overview-mature"><span>Reif</span><strong id="overview-mature">0</strong></div>
+            </div>
+        </div>
         <div class="chapter-list">
             <button class="chapter-btn omnireview-btn" onclick="startSession('all')">Omnireview (Alles)</button>
             <div id="chapter-buttons">
@@ -20,6 +29,7 @@
 
     <div id="session-view" class="hidden">
         <div class="card-stack">
+            <div class="progress-label" id="progress-label">0/0</div>
             <div class="card" id="flashcard" onclick="flipCard()">
                 <div class="card-face card-front">
                     <h2 id="wordFront">Lade...</h2>
@@ -32,7 +42,10 @@
             </div>
         </div>
         <div class="controls hidden" id="controls">
-            <button class="btn-next" onclick="nextCard()">Nächste Karte →</button>
+            <button class="btn-rate btn-again" onclick="rateCard(1)">Again</button>
+            <button class="btn-rate btn-hard" onclick="rateCard(2)">Hard</button>
+            <button class="btn-rate btn-good" onclick="rateCard(3)">Good</button>
+            <button class="btn-rate btn-easy" onclick="rateCard(4)">Easy</button>
         </div>
     </div>
 

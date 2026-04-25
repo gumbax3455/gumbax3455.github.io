@@ -36,6 +36,40 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
 
 /* Menu Styles */
 #menu-view { width: min(92vw, 620px); text-align: center; }
+.deck-overview {
+    margin-top: 16px;
+    background: #ffffff;
+    border: 1px solid #dce7f7;
+    border-radius: 14px;
+    padding: 14px;
+    text-align: left;
+}
+.deck-overview h2 {
+    margin: 0 0 10px;
+    font-size: 1rem;
+}
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+.overview-item {
+    border-radius: 10px;
+    border: 1px solid #e7edf6;
+    background: #fafcff;
+    padding: 8px;
+}
+.overview-item span {
+    display: block;
+    font-size: 0.72rem;
+    color: #50617c;
+}
+.overview-item strong {
+    font-size: 1.1rem;
+}
+.overview-new { border-color: #77a9ff; }
+.overview-due { border-color: #f18a8a; }
+.overview-mature { border-color: #77d597; }
 .chapter-list { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 30px; }
 .chapter-btn { 
     padding: 17px 18px; background: white; border: 1px solid #e1e7f0; border-radius: 14px;
@@ -45,9 +79,16 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
 .chapter-btn:hover { border-color: #007bff; color: #007bff; background: #f8fbff; }
 .omnireview-btn { background: #007bff; color: white; border: none; margin-bottom: 20px; text-align: center; justify-content: center; }
 .omnireview-btn:hover { background: #0062c3; color: white; }
+.chapter-meta { opacity: 0.6; font-size: 0.8rem; }
 
 /* Card Styles */
 .card-stack { width: min(92vw, 760px); margin: 0 auto; }
+.progress-label {
+    text-align: right;
+    margin: 0 4px 10px;
+    color: #61728d;
+    font-size: 0.85rem;
+}
 .card { width: 100%; cursor: pointer; }
 .card-face { 
     width: 100%;
@@ -77,6 +118,12 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
 .card-front h2 { color: #1f2633; font-weight: 670; letter-spacing: -0.01em; }
 .card-back { background: #fcfdff; border: 1px solid #cfe0ff; }
 .card-back h2 { color: #0066d6; margin-bottom: 2px; font-weight: 700; }
+.card-status-new .card-front,
+.card-status-new .card-back { border-color: #78aaf5; }
+.card-status-due .card-front,
+.card-status-due .card-back { border-color: #f48f8f; }
+.card-status-mature .card-front,
+.card-status-mature .card-back { border-color: #7edba0; }
 
 /* Merkhilfe (Mnemonic) */
 .merkhilfe { 
@@ -85,12 +132,32 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
     overflow-wrap: anywhere; hyphens: auto;
 }
 
-.controls { margin-top: 26px; margin-bottom: 8px; }
-.btn-next { padding: 15px 36px; border-radius: 999px; border: none; background: #1f2430; color: white; font-weight: 650; font-size: 1.02rem; cursor: pointer; }
+.controls {
+    margin-top: 26px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: min(92vw, 760px);
+}
+.btn-rate {
+    padding: 14px 10px;
+    border-radius: 12px;
+    border: none;
+    color: white;
+    font-weight: 650;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+.btn-again { background: #d53a3a; }
+.btn-hard { background: #da8a2b; }
+.btn-good { background: #2f7ad9; }
+.btn-easy { background: #2e9e58; }
 .hidden { display: none !important; }
 
 @media (max-width: 700px) {
     .flashcard-mode { padding: 88px 14px 20px; }
     .card-face { min-height: clamp(230px, 44vh, 360px); max-height: 68vh; border-radius: 20px; }
-    .btn-next { width: 100%; max-width: 360px; }
+    .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
