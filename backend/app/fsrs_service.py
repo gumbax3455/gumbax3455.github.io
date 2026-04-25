@@ -6,42 +6,62 @@ from fsrs import Card, Rating, Scheduler, State
 scheduler = Scheduler()
 
 
+def _enum_member(enum_cls, *candidates):
+    for candidate in candidates:
+        if hasattr(enum_cls, candidate):
+            return getattr(enum_cls, candidate)
+    raise AttributeError(f"{enum_cls.__name__} has none of {candidates}")
+
+
 def int_to_rating(rating: int) -> Rating:
     mapping = {
-        1: Rating.Again,
-        2: Rating.Hard,
-        3: Rating.Good,
-        4: Rating.Easy,
+        1: _enum_member(Rating, "Again", "AGAIN"),
+        2: _enum_member(Rating, "Hard", "HARD"),
+        3: _enum_member(Rating, "Good", "GOOD"),
+        4: _enum_member(Rating, "Easy", "EASY"),
     }
     return mapping[rating]
 
 
 def state_from_str(state: str) -> State:
+    # Support multiple py-fsrs enum naming styles across versions.
+    learning = _enum_member(State, "Learning", "LEARNING")
+    review = _enum_member(State, "Review", "REVIEW")
+    relearning = _enum_member(State, "Relearning", "RELEARNING")
+    fallback = learning
     mapping = {
-        "New": State.New,
-        "Learning": State.Learning,
-        "Review": State.Review,
-        "Relearning": State.Relearning,
+        "New": fallback,
+        "Learning": learning,
+        "Review": review,
+        "Relearning": relearning,
     }
-    return mapping.get(state, State.New)
+    return mapping.get(state, fallback)
 
 
 def state_to_str(state: State) -> str:
-    if state == State.Learning:
+    learning = _enum_member(State, "Learning", "LEARNING")
+    review = _enum_member(State, "Review", "REVIEW")
+    relearning = _enum_member(State, "Relearning", "RELEARNING")
+    if state == learning:
         return "Learning"
-    if state == State.Review:
+    if state == review:
         return "Review"
-    if state == State.Relearning:
+    if state == relearning:
         return "Relearning"
     return "New"
 
 
 def build_card_from_row(row: dict) -> Card:
     card_id = _to_int_card_id(row.get("card_id"))
-    state_value = state_from_str(row["state"]) if row.get("state") else State.New
-    if state_value == State.New:
+    learning = _enum_member(State, "Learning", "LEARNING")
+    state_value = state_from_str(row["state"]) if row.get("state") else learning
+    maybe_new = getattr(State, "New", getattr(State, "NEW", None))
+    if maybe_new is not None and state_value == maybe_new:
         # py-fsrs expects a valid learning/review state, so we map DB "New" to Learning.
-        state_value = State.Learning
+        state_value = learning
+    elif row.get("state") == "New":
+        # py-fsrs expects a valid learning/review state, so we map DB "New" to Learning.
+        state_value = learning
 
     return Card(
         card_id=card_id,
