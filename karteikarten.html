@@ -27,6 +27,20 @@
         </div>
     </div>
 
+    <div id="deck-overview-view" class="hidden">
+        <div class="deck-detail-header">
+            <button class="deck-detail-back-btn" onclick="closeDeckOverview()">← Zurück</button>
+            <h2 id="deck-detail-title">Lektion</h2>
+        </div>
+
+        <div class="deck-detail-toolbar">
+            <input id="deck-search-input" type="text" placeholder="Karten in dieser Lektion suchen..." autocomplete="off">
+        </div>
+
+        <div id="deck-card-list" class="deck-card-list"></div>
+        <button class="lernen-floating-btn" onclick="startLearningFromOverview()">Lernen</button>
+    </div>
+
     <div id="session-view" class="hidden">
         <div class="card-stack">
             <div class="progress-label" id="progress-label">0/0</div>

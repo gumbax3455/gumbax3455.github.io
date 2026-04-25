@@ -1,6 +1,7 @@
 let allChapters = {};
 let currentDeck = [];
 let currentDeckName = "all";
+let selectedOverviewDeckName = "";
 let currentIndex = 0;
 let isSubmittingReview = false;
 
@@ -16,6 +17,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     await refreshDeckStatus();
     renderMenu();
     updateOverviewPanel("all");
+
+    const deckSearchInput = document.getElementById("deck-search-input");
+    if (deckSearchInput) {
+        deckSearchInput.addEventListener("input", () => {
+            const cards = allChapters[selectedOverviewDeckName] || [];
+            renderDeckOverviewRows(cards, deckSearchInput.value);
+        });
+    }
 });
 
 async function loadCsvCards() {
@@ -96,10 +105,42 @@ function renderMenu() {
         const btn = document.createElement("button");
         btn.className = "chapter-btn";
         btn.innerHTML = `<span>${name}</span> <span class="chapter-meta">Neu ${stat.newCards} | Faellig ${stat.dueCards} | Reif ${stat.matureCards}</span>`;
-        btn.onclick = () => startSession(name);
+        btn.onclick = () => openDeckOverview(name);
         btn.onmouseenter = () => updateOverviewPanel(name);
         container.appendChild(btn);
     });
+}
+
+async function openDeckOverview(deckName) {
+    selectedOverviewDeckName = deckName;
+    currentDeckName = deckName;
+
+    await refreshDeckStatus(deckName);
+
+    const title = document.getElementById("deck-detail-title");
+    if (title) title.innerText = deckName;
+
+    const deckSearchInput = document.getElementById("deck-search-input");
+    if (deckSearchInput) deckSearchInput.value = "";
+
+    renderDeckOverviewRows(allChapters[deckName] || []);
+
+    document.getElementById("menu-view").classList.add("hidden");
+    document.getElementById("session-view").classList.add("hidden");
+    document.getElementById("deck-overview-view").classList.remove("hidden");
+}
+
+function closeDeckOverview() {
+    document.getElementById("deck-overview-view").classList.add("hidden");
+    document.getElementById("session-view").classList.add("hidden");
+    document.getElementById("menu-view").classList.remove("hidden");
+    updateOverviewPanel(selectedOverviewDeckName || "all");
+    renderMenu();
+}
+
+function startLearningFromOverview() {
+    if (!selectedOverviewDeckName) return;
+    startSession(selectedOverviewDeckName);
 }
 
 async function startSession(mode) {
@@ -110,6 +151,7 @@ async function startSession(mode) {
     currentDeck.sort((a, b) => bucketPriority(a.statusBucket) - bucketPriority(b.statusBucket));
     currentIndex = 0;
     document.getElementById("menu-view").classList.add("hidden");
+    document.getElementById("deck-overview-view").classList.add("hidden");
     document.getElementById("session-view").classList.remove("hidden");
     displayCard();
 }
@@ -183,12 +225,82 @@ async function rateCard(rating) {
 function handleBack() {
     if (!document.getElementById("session-view").classList.contains("hidden")) {
         document.getElementById("session-view").classList.add("hidden");
-        document.getElementById("menu-view").classList.remove("hidden");
-        updateOverviewPanel(currentDeckName);
-        renderMenu();
+        if (currentDeckName !== "all" && selectedOverviewDeckName) {
+            document.getElementById("deck-overview-view").classList.remove("hidden");
+            const cards = allChapters[selectedOverviewDeckName] || [];
+            const searchTerm = document.getElementById("deck-search-input")?.value || "";
+            renderDeckOverviewRows(cards, searchTerm);
+        } else {
+            document.getElementById("menu-view").classList.remove("hidden");
+            updateOverviewPanel(currentDeckName);
+            renderMenu();
+        }
+    } else if (!document.getElementById("deck-overview-view").classList.contains("hidden")) {
+        closeDeckOverview();
     } else {
         window.location.href = "index.html";
     }
+}
+
+function renderDeckOverviewRows(cards, rawQuery = "") {
+    const list = document.getElementById("deck-card-list");
+    if (!list) return;
+
+    const query = rawQuery.trim().toLowerCase();
+    const filtered = cards.filter(card => {
+        if (!query) return true;
+        return card.latin.toLowerCase().includes(query) || card.german.toLowerCase().includes(query);
+    });
+
+    list.innerHTML = "";
+    if (filtered.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "deck-card-empty";
+        empty.innerText = "Keine Karten gefunden.";
+        list.appendChild(empty);
+        return;
+    }
+
+    filtered.forEach(card => {
+        const row = document.createElement("div");
+        row.className = "deck-card-row";
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "deck-card-texts";
+
+        const latin = document.createElement("span");
+        latin.className = "deck-card-latin";
+        latin.innerText = card.latin;
+
+        const german = document.createElement("span");
+        german.className = "deck-card-german";
+        german.innerText = card.german;
+
+        textWrap.appendChild(latin);
+        textWrap.appendChild(german);
+
+        const status = document.createElement("span");
+        status.className = `deck-status-dot deck-status-${getDeckIndicatorColor(card)}`;
+        status.title = card.state || "New";
+
+        row.appendChild(textWrap);
+        row.appendChild(status);
+        list.appendChild(row);
+    });
+}
+
+function getDeckIndicatorColor(card) {
+    if (!card || !card.state || card.state === "New") return "blue";
+    if (isDueNow(card.dueDate)) return "red";
+    if (card.state === "Learning" || card.state === "Relearning") return "red";
+    if (card.state === "Review") return "green";
+    return "blue";
+}
+
+function isDueNow(dueDate) {
+    if (!dueDate) return false;
+    const dueTs = Date.parse(dueDate);
+    return !Number.isNaN(dueTs) && dueTs <= Date.now();
 }
 
 function summarizeCards(cards) {
