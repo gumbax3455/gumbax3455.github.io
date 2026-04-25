@@ -8,7 +8,17 @@ from pydantic import BaseModel, Field
 from psycopg.rows import dict_row
 
 from .db import close_pool, get_conn, open_pool
-from .fsrs_service import build_card_from_row, fresh_card, review, state_to_str, status_bucket
+from .fsrs_service import (
+    build_card_from_row,
+    derive_elapsed_days,
+    derive_lapses,
+    derive_reps,
+    derive_scheduled_days,
+    fresh_card,
+    review,
+    state_to_str,
+    status_bucket,
+)
 from .settings import settings
 
 
@@ -53,6 +63,15 @@ def serialize_card_row(card_row: dict[str, Any]) -> dict[str, Any]:
         "due_date": card_row["due_date"],
         "status_bucket": status_bucket(card_row["state"], card_row["due_date"]),
     }
+
+
+def _safe_float(value: Any) -> float:
+    try:
+        if value is None:
+            return 0.0
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 @app.get("/health")
@@ -108,6 +127,17 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
 
             deck_name = payload.deck_name or (row["deck_name"] if row else "Unknown")
             state = state_to_str(updated_card.state)
+            elapsed_days = derive_elapsed_days(
+                before["last_review"] if before else None,
+                now,
+            )
+            scheduled_days = derive_scheduled_days(updated_card.due, now)
+            reps = derive_reps(before["reps"] if before else None)
+            lapses = derive_lapses(
+                before["lapses"] if before else None,
+                before["state"] if before else None,
+                payload.rating,
+            )
 
             cur.execute(
                 """
@@ -131,12 +161,12 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                 (
                     payload.card_id,
                     deck_name,
-                    float(updated_card.stability),
-                    float(updated_card.difficulty),
-                    int(updated_card.elapsed_days),
-                    int(updated_card.scheduled_days),
-                    int(updated_card.reps),
-                    int(updated_card.lapses),
+                    _safe_float(updated_card.stability),
+                    _safe_float(updated_card.difficulty),
+                    elapsed_days,
+                    scheduled_days,
+                    reps,
+                    lapses,
                     state,
                     updated_card.last_review or now,
                     updated_card.due,
@@ -173,12 +203,12 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                     before["state"] if before else "New",
                     before["last_review"] if before else None,
                     before["due_date"] if before else None,
-                    float(updated_card.stability),
-                    float(updated_card.difficulty),
-                    int(updated_card.elapsed_days),
-                    int(updated_card.scheduled_days),
-                    int(updated_card.reps),
-                    int(updated_card.lapses),
+                    _safe_float(updated_card.stability),
+                    _safe_float(updated_card.difficulty),
+                    elapsed_days,
+                    scheduled_days,
+                    reps,
+                    lapses,
                     state,
                     updated_card.last_review or now,
                     updated_card.due,
