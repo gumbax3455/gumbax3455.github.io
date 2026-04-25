@@ -11,6 +11,13 @@ const STATUS_CLASS_BY_BUCKET = {
     due: "card-status-due",
     mature: "card-status-mature"
 };
+const DASHBOARD_LEVEL_ORDER = [6, 3, 2, 1];
+const DASHBOARD_COLOR_BY_KEY = {
+    red: "deck-level-red",
+    yellow: "deck-level-yellow",
+    blue: "deck-level-blue",
+    green: "deck-level-green"
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
     await loadCsvCards();
@@ -117,8 +124,8 @@ async function openDeckOverview(deckName) {
 
     await refreshDeckStatus(deckName);
 
-    const title = document.getElementById("deck-detail-title");
-    if (title) title.innerText = deckName;
+    const navTitle = document.getElementById("nav-title");
+    if (navTitle) navTitle.innerText = `Latein ${deckName}`;
 
     const deckSearchInput = document.getElementById("deck-search-input");
     if (deckSearchInput) deckSearchInput.value = "";
@@ -134,6 +141,8 @@ function closeDeckOverview() {
     document.getElementById("deck-overview-view").classList.add("hidden");
     document.getElementById("session-view").classList.add("hidden");
     document.getElementById("menu-view").classList.remove("hidden");
+    const navTitle = document.getElementById("nav-title");
+    if (navTitle) navTitle.innerText = "Latein Lektionen";
     updateOverviewPanel(selectedOverviewDeckName || "all");
     renderMenu();
 }
@@ -153,6 +162,8 @@ async function startSession(mode) {
     document.getElementById("menu-view").classList.add("hidden");
     document.getElementById("deck-overview-view").classList.add("hidden");
     document.getElementById("session-view").classList.remove("hidden");
+    const navTitle = document.getElementById("nav-title");
+    if (navTitle) navTitle.innerText = `Latein ${mode}`;
     displayCard();
 }
 
@@ -245,14 +256,18 @@ function handleBack() {
 function renderDeckOverviewRows(cards, rawQuery = "") {
     const list = document.getElementById("deck-card-list");
     if (!list) return;
+    const count = document.getElementById("deck-card-count");
 
     const query = rawQuery.trim().toLowerCase();
     const filtered = cards.filter(card => {
         if (!query) return true;
         return card.latin.toLowerCase().includes(query) || card.german.toLowerCase().includes(query);
     });
+    if (count) count.innerText = `${filtered.length}/${cards.length}`;
 
     list.innerHTML = "";
+    renderDashboardAnalytics(cards);
+
     if (filtered.length === 0) {
         const empty = document.createElement("div");
         empty.className = "deck-card-empty";
@@ -262,38 +277,114 @@ function renderDeckOverviewRows(cards, rawQuery = "") {
     }
 
     filtered.forEach(card => {
-        const row = document.createElement("div");
-        row.className = "deck-card-row";
+        const mapped = mapCardToDashboardLevel(card);
+        const cardNode = document.createElement("div");
+        cardNode.className = `deck-gallery-card ${DASHBOARD_COLOR_BY_KEY[mapped.colorKey]}`;
 
-        const textWrap = document.createElement("div");
-        textWrap.className = "deck-card-texts";
+        const levelTag = document.createElement("span");
+        levelTag.className = "deck-level-tag";
+        levelTag.innerText = String(mapped.level);
 
-        const latin = document.createElement("span");
-        latin.className = "deck-card-latin";
+        const latin = document.createElement("div");
+        latin.className = "deck-gallery-latin";
         latin.innerText = card.latin;
 
-        const german = document.createElement("span");
-        german.className = "deck-card-german";
-        german.innerText = card.german;
-
-        textWrap.appendChild(latin);
-        textWrap.appendChild(german);
-
-        const status = document.createElement("span");
-        status.className = `deck-status-dot deck-status-${getDeckIndicatorColor(card)}`;
-        status.title = card.state || "New";
-
-        row.appendChild(textWrap);
-        row.appendChild(status);
-        list.appendChild(row);
+        cardNode.appendChild(levelTag);
+        cardNode.appendChild(latin);
+        list.appendChild(cardNode);
     });
 }
 
-function getDeckIndicatorColor(card) {
-    if (!card || !card.state || card.state === "New") return "blue";
-    if (isDueNow(card.dueDate)) return "red";
-    if (card.state === "Learning" || card.state === "Relearning") return "red";
-    if (card.state === "Review") return "green";
+function renderDashboardAnalytics(cards) {
+    const totals = { 6: 0, 3: 0, 2: 0, 1: 0 };
+    cards.forEach(card => {
+        const mapped = mapCardToDashboardLevel(card);
+        totals[mapped.level] = (totals[mapped.level] || 0) + 1;
+    });
+
+    const totalCards = cards.length || 1;
+    const masteredCount = totals[1] || 0;
+    const masteryPct = Math.round((masteredCount / totalCards) * 100);
+    const note = cards.length ? (6 - masteryPct * 0.05).toFixed(1) : "-";
+    const gradeValue = document.getElementById("grade-value");
+    const gradeCaption = document.getElementById("grade-caption");
+    if (gradeValue) gradeValue.innerText = note;
+    if (gradeCaption) gradeCaption.innerText = `${masteryPct}% beherrscht`;
+
+    const bars = document.getElementById("srs-bars");
+    if (bars) {
+        const maxCount = Math.max(...DASHBOARD_LEVEL_ORDER.map(level => totals[level] || 0), 1);
+        bars.innerHTML = "";
+        DASHBOARD_LEVEL_ORDER.forEach(level => {
+            const amount = totals[level] || 0;
+            const item = document.createElement("div");
+            item.className = "srs-bar-item";
+            const value = document.createElement("span");
+            value.className = "srs-bar-value";
+            value.innerText = String(amount);
+            const bar = document.createElement("div");
+            const mappedClass = DASHBOARD_COLOR_BY_KEY[getColorKeyForLevel(level)];
+            bar.className = `srs-bar ${mappedClass}`;
+            bar.style.height = `${Math.max(8, Math.round((amount / maxCount) * 70))}px`;
+            const label = document.createElement("span");
+            label.className = "srs-bar-label";
+            label.innerText = String(level);
+            item.appendChild(value);
+            item.appendChild(bar);
+            item.appendChild(label);
+            bars.appendChild(item);
+        });
+    }
+
+    renderPlaceholderDailyProgress(cards);
+}
+
+function renderPlaceholderDailyProgress(cards) {
+    const polyline = document.getElementById("daily-progress-line");
+    if (!polyline) return;
+    const series = buildPlaceholderDailySeries(cards);
+    const maxValue = Math.max(...series, 1);
+    const stepX = 320 / (series.length - 1);
+    const points = series.map((value, idx) => {
+        const x = Math.round(idx * stepX);
+        const y = Math.round(90 - (value / maxValue) * 78);
+        return `${x},${y}`;
+    });
+    polyline.setAttribute("points", points.join(" "));
+}
+
+function buildPlaceholderDailySeries(cards) {
+    const total = cards.length;
+    const due = cards.filter(card => isDueNow(card.dueDate)).length;
+    const seed = Math.max(3, Math.round(total / 6));
+    return [
+        seed + due + 2,
+        seed + 1,
+        Math.max(1, seed - 1),
+        seed + due,
+        seed + 2,
+        seed,
+        Math.max(1, seed - 2)
+    ];
+}
+
+function mapCardToDashboardLevel(card) {
+    if (!card || !card.state) return { level: 2, colorKey: "blue" };
+    if (isDueNow(card.dueDate)) return { level: 6, colorKey: "red" };
+    if (card.state === "Learning" || card.state === "Relearning") return { level: 6, colorKey: "red" };
+    if (card.state === "New") return { level: 2, colorKey: "blue" };
+    if (card.state === "Review") {
+        const stability = Number(card.stability || 0);
+        if (stability > 0 && stability < 3) return { level: 3, colorKey: "yellow" };
+        return { level: 1, colorKey: "green" };
+    }
+    return { level: 2, colorKey: "blue" };
+}
+
+function getColorKeyForLevel(level) {
+    if (level === 6) return "red";
+    if (level === 3) return "yellow";
+    if (level === 1) return "green";
     return "blue";
 }
 

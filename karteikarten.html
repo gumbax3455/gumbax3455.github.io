@@ -6,60 +6,92 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="flashcard-mode">
+    <div class="kk-shell">
+        <header class="kk-top-nav">
+            <div class="kk-nav-left">
+                <button class="back-btn" onclick="handleBack()">Stapel</button>
+            </div>
+            <h1 class="kk-nav-title" id="nav-title">Latein Lektionen</h1>
+            <button class="kk-menu-btn" aria-label="Mehr Optionen">...</button>
+        </header>
 
-    <button class="back-btn" style="position:fixed; top:20px; left:20px; z-index:100;" onclick="handleBack()">← Zurück</button>
-
-    <div id="menu-view">
-        <h1>Was möchtest du lernen?</h1>
-        <div id="deck-overview" class="deck-overview">
-            <h2 id="overview-title">Alle Lektionen</h2>
-            <div class="overview-grid">
-                <div class="overview-item"><span>Gesamt</span><strong id="overview-total">0</strong></div>
-                <div class="overview-item overview-new"><span>Neu</span><strong id="overview-new">0</strong></div>
-                <div class="overview-item overview-due"><span>Faellig/Problem</span><strong id="overview-due">0</strong></div>
-                <div class="overview-item overview-mature"><span>Reif</span><strong id="overview-mature">0</strong></div>
+        <div id="menu-view" class="kk-view">
+            <section id="deck-overview" class="deck-overview">
+                <h2 id="overview-title">Alle Lektionen</h2>
+                <div class="overview-grid">
+                    <div class="overview-item"><span>Gesamt</span><strong id="overview-total">0</strong></div>
+                    <div class="overview-item overview-new"><span>Neu</span><strong id="overview-new">0</strong></div>
+                    <div class="overview-item overview-due"><span>Faellig/Problem</span><strong id="overview-due">0</strong></div>
+                    <div class="overview-item overview-mature"><span>Reif</span><strong id="overview-mature">0</strong></div>
+                </div>
+            </section>
+            <div class="chapter-list">
+                <button class="chapter-btn omnireview-btn" onclick="startSession('all')">Omnireview (Alles)</button>
+                <div id="chapter-buttons"></div>
             </div>
         </div>
-        <div class="chapter-list">
-            <button class="chapter-btn omnireview-btn" onclick="startSession('all')">Omnireview (Alles)</button>
-            <div id="chapter-buttons">
+
+        <div id="deck-overview-view" class="kk-view hidden">
+            <section class="dashboard-grid">
+                <article class="dashboard-card grade-card">
+                    <p class="dashboard-label">Note</p>
+                    <div id="grade-value" class="grade-value">0%</div>
+                    <p class="muted-text" id="grade-caption">Beherrschte Karten</p>
+                </article>
+                <article class="dashboard-card bar-card">
+                    <p class="dashboard-label">Lernstufen</p>
+                    <div id="srs-bars" class="srs-bars"></div>
+                </article>
+                <article class="dashboard-card line-card">
+                    <p class="dashboard-label">Taeglicher Fortschritt</p>
+                    <svg id="daily-progress-chart" viewBox="0 0 320 96" preserveAspectRatio="none">
+                        <polyline id="daily-progress-line" points=""></polyline>
+                    </svg>
+                </article>
+                <article class="dashboard-card settings-card">
+                    <p class="dashboard-label">Einstellungen</p>
+                    <ul class="settings-list">
+                        <li><span>[]</span><span>Karten pro Sitzung</span></li>
+                        <li><span>Aa</span><span>Schriftgroesse</span></li>
+                        <li><span>t</span><span>Auto-Flip</span></li>
+                        <li><span>R</span><span>Wiederholungsmodus</span></li>
+                        <li><span>></span><span>Kartenorientierung</span></li>
+                    </ul>
+                </article>
+            </section>
+
+            <section class="gallery-shell">
+                <div class="gallery-top-row">
+                    <input id="deck-search-input" class="deck-search-pill" type="text" placeholder="In dieser Lektion suchen..." autocomplete="off">
+                    <div class="gallery-counter" id="deck-card-count">0/0</div>
                 </div>
-        </div>
-    </div>
+                <div class="gallery-header">Karten</div>
+                <div id="deck-card-list" class="deck-card-list"></div>
+            </section>
 
-    <div id="deck-overview-view" class="hidden">
-        <div class="deck-detail-header">
-            <button class="deck-detail-back-btn" onclick="closeDeckOverview()">← Zurück</button>
-            <h2 id="deck-detail-title">Lektion</h2>
+            <button class="lernen-floating-btn" onclick="startLearningFromOverview()">> Wiederholung</button>
         </div>
 
-        <div class="deck-detail-toolbar">
-            <input id="deck-search-input" type="text" placeholder="Karten in dieser Lektion suchen..." autocomplete="off">
-        </div>
-
-        <div id="deck-card-list" class="deck-card-list"></div>
-        <button class="lernen-floating-btn" onclick="startLearningFromOverview()">Lernen</button>
-    </div>
-
-    <div id="session-view" class="hidden">
-        <div class="card-stack">
-            <div class="progress-label" id="progress-label">0/0</div>
-            <div class="card" id="flashcard" onclick="flipCard()">
-                <div class="card-face card-front">
-                    <h2 id="wordFront">Lade...</h2>
-                    <p style="color:#aaa; margin-top:15px; font-size: 0.8rem;">Klicken zum Umdrehen</p>
-                </div>
-                <div class="card-face card-back">
-                    <h2 id="wordBack">...</h2>
-                    <div id="merkhilfe-container" class="merkhilfe"></div>
+        <div id="session-view" class="kk-view hidden">
+            <div class="card-stack">
+                <div class="progress-label" id="progress-label">0/0</div>
+                <div class="card" id="flashcard" onclick="flipCard()">
+                    <div class="card-face card-front">
+                        <h2 id="wordFront">Lade...</h2>
+                        <p style="color:#888; margin-top:15px; font-size: 0.8rem;">Klicken zum Umdrehen</p>
+                    </div>
+                    <div class="card-face card-back">
+                        <h2 id="wordBack">...</h2>
+                        <div id="merkhilfe-container" class="merkhilfe"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="controls hidden" id="controls">
-            <button class="btn-rate btn-again" onclick="rateCard(1)">Again</button>
-            <button class="btn-rate btn-hard" onclick="rateCard(2)">Hard</button>
-            <button class="btn-rate btn-good" onclick="rateCard(3)">Good</button>
-            <button class="btn-rate btn-easy" onclick="rateCard(4)">Easy</button>
+            <div class="controls hidden" id="controls">
+                <button class="btn-rate btn-again" onclick="rateCard(1)">Again</button>
+                <button class="btn-rate btn-hard" onclick="rateCard(2)">Hard</button>
+                <button class="btn-rate btn-good" onclick="rateCard(3)">Good</button>
+                <button class="btn-rate btn-easy" onclick="rateCard(4)">Easy</button>
+            </div>
         </div>
     </div>
 
