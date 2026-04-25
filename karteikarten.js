@@ -4,7 +4,7 @@ let currentDeckName = "all";
 let currentIndex = 0;
 let isSubmittingReview = false;
 
-const API_BASE_URL = (window.API_BASE_URL || "").replace(/\/$/, "");
+const API_BASE_URL = "https://latin-backend-myrk.onrender.com";
 const STATUS_CLASS_BY_BUCKET = {
     new: "card-status-new",
     due: "card-status-due",
