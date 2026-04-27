@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 
 from fsrs import Card, Rating, Scheduler, State
 
@@ -23,45 +24,105 @@ def int_to_rating(rating: int) -> Rating:
     return mapping[rating]
 
 
-def state_from_str(state: str) -> State:
+def int_to_state(state: int) -> State:
     # Support multiple py-fsrs enum naming styles across versions.
+    maybe_new = _enum_member(State, "New", "NEW")
     learning = _enum_member(State, "Learning", "LEARNING")
     review = _enum_member(State, "Review", "REVIEW")
     relearning = _enum_member(State, "Relearning", "RELEARNING")
-    fallback = learning
     mapping = {
-        "New": fallback,
-        "Learning": learning,
-        "Review": review,
-        "Relearning": relearning,
+        0: maybe_new,
+        1: learning,
+        2: review,
+        3: relearning,
     }
-    return mapping.get(state, fallback)
+    return mapping.get(state, maybe_new)
+
+
+def state_to_int(state: State) -> int:
+    maybe_new = _enum_member(State, "New", "NEW")
+    learning = _enum_member(State, "Learning", "LEARNING")
+    review = _enum_member(State, "Review", "REVIEW")
+    relearning = _enum_member(State, "Relearning", "RELEARNING")
+    if state == maybe_new:
+        return 0
+    if state == learning:
+        return 1
+    if state == review:
+        return 2
+    if state == relearning:
+        return 3
+    return 0
+
+
+def state_from_db(value: Any) -> State:
+    # Transition-safe DB decoding: canonical is SMALLINT (0..3),
+    # but we also accept legacy enum text values during migration.
+    if isinstance(value, int):
+        return int_to_state(value)
+    mapping = {
+        "New": 0,
+        "Learning": 1,
+        "Review": 2,
+        "Relearning": 3,
+    }
+    return int_to_state(mapping.get(str(value), 0))
+
+
+def state_to_db(state: State) -> int:
+    return state_to_int(state)
+
+
+def _as_int(value: Any, default: int = 0) -> int:
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_datetime(value: Any, default: datetime) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    return default
 
 
 def state_to_str(state: State) -> str:
-    learning = _enum_member(State, "Learning", "LEARNING")
-    review = _enum_member(State, "Review", "REVIEW")
-    relearning = _enum_member(State, "Relearning", "RELEARNING")
-    if state == learning:
-        return "Learning"
-    if state == review:
-        return "Review"
-    if state == relearning:
-        return "Relearning"
-    return "New"
+    mapping = {
+        0: "New",
+        1: "Learning",
+        2: "Review",
+        3: "Relearning",
+    }
+    return mapping[state_to_int(state)]
+
+
+def state_label(value: Any) -> str:
+    mapping = {
+        0: "New",
+        1: "Learning",
+        2: "Review",
+        3: "Relearning",
+    }
+    if isinstance(value, int):
+        return mapping.get(value, "New")
+    legacy = {"New": "New", "Learning": "Learning", "Review": "Review", "Relearning": "Relearning"}
+    return legacy.get(str(value), "New")
 
 
 def build_card_from_row(row: dict) -> Card:
     card_id = _to_int_card_id(row.get("card_id"))
-    learning = _enum_member(State, "Learning", "LEARNING")
-    state_value = state_from_str(row["state"]) if row.get("state") else learning
-    maybe_new = getattr(State, "New", getattr(State, "NEW", None))
-    if maybe_new is not None and state_value == maybe_new:
-        # py-fsrs expects a valid learning/review state, so we map DB "New" to Learning.
-        state_value = learning
-    elif row.get("state") == "New":
-        # py-fsrs expects a valid learning/review state, so we map DB "New" to Learning.
-        state_value = learning
+    state_value = state_from_db(row["state"]) if row.get("state") is not None else int_to_state(0)
 
     return Card(
         card_id=card_id,
@@ -77,8 +138,34 @@ def fresh_card() -> Card:
     return Card()
 
 
-def review(card: Card, rating: int):
-    return scheduler.review_card(card, int_to_rating(rating))
+def review_step(card: Card, rating: int, now: datetime | None = None) -> dict[str, Any]:
+    review_now = now or datetime.now(UTC)
+    rating_enum = int_to_rating(rating)
+
+    if hasattr(scheduler, "dict_step"):
+        step = scheduler.dict_step(card, rating_enum, review_datetime=review_now)
+        return {
+            "card": step["card"],
+            "stability": _as_float(step.get("stability")),
+            "difficulty": _as_float(step.get("difficulty")),
+            "state": _as_int(step.get("state"), state_to_db(step["card"].state)),
+            "due": _as_datetime(step.get("due"), step["card"].due),
+            "reps": _as_int(step.get("reps"), _as_int(getattr(step["card"], "reps", 0))),
+            "lapses": _as_int(step.get("lapses"), _as_int(getattr(step["card"], "lapses", 0))),
+            "last_review": _as_datetime(step.get("last_review"), review_now),
+        }
+
+    updated_card, _review_log = scheduler.review_card(card, rating_enum)
+    return {
+        "card": updated_card,
+        "stability": _as_float(getattr(updated_card, "stability", None)),
+        "difficulty": _as_float(getattr(updated_card, "difficulty", None)),
+        "state": state_to_db(updated_card.state),
+        "due": _as_datetime(getattr(updated_card, "due", None), review_now),
+        "reps": _as_int(getattr(updated_card, "reps", None)),
+        "lapses": _as_int(getattr(updated_card, "lapses", None)),
+        "last_review": _as_datetime(getattr(updated_card, "last_review", None), review_now),
+    }
 
 
 def derive_elapsed_days(last_review: datetime | None, reviewed_at: datetime) -> int:
@@ -103,8 +190,9 @@ def derive_lapses(previous_lapses: int | None, previous_state: str | None, ratin
     return (previous_lapses or 0) + (1 if is_lapse else 0)
 
 
-def status_bucket(state: str, due_date: datetime | None, now: datetime | None = None) -> str:
-    if state == "New":
+def status_bucket(state: int | str, due_date: datetime | None, now: datetime | None = None) -> str:
+    state_int = state if isinstance(state, int) else {"New": 0, "Learning": 1, "Review": 2, "Relearning": 3}.get(state, 0)
+    if state_int == 0:
         return "new"
     now = now or datetime.now(UTC)
     if due_date and due_date <= now:

@@ -1,5 +1,3 @@
-CREATE TYPE fsrs_state AS ENUM ('New', 'Learning', 'Review', 'Relearning');
-
 CREATE TABLE IF NOT EXISTS cards (
     card_id TEXT PRIMARY KEY,
     deck_name TEXT NOT NULL,
@@ -9,7 +7,7 @@ CREATE TABLE IF NOT EXISTS cards (
     scheduled_days INTEGER NOT NULL DEFAULT 0,
     reps INTEGER NOT NULL DEFAULT 0,
     lapses INTEGER NOT NULL DEFAULT 0,
-    state fsrs_state NOT NULL DEFAULT 'New',
+    state SMALLINT NOT NULL DEFAULT 0 CHECK (state BETWEEN 0 AND 3),
     last_review TIMESTAMPTZ,
     due_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -29,7 +27,7 @@ CREATE TABLE IF NOT EXISTS review_logs (
     before_scheduled_days INTEGER,
     before_reps INTEGER,
     before_lapses INTEGER,
-    before_state fsrs_state,
+    before_state SMALLINT CHECK (before_state BETWEEN 0 AND 3),
     before_last_review TIMESTAMPTZ,
     before_due_date TIMESTAMPTZ,
     after_stability DOUBLE PRECISION,
@@ -38,14 +36,14 @@ CREATE TABLE IF NOT EXISTS review_logs (
     after_scheduled_days INTEGER,
     after_reps INTEGER,
     after_lapses INTEGER,
-    after_state fsrs_state,
+    after_state SMALLINT CHECK (after_state BETWEEN 0 AND 3),
     after_last_review TIMESTAMPTZ,
     after_due_date TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_cards_due_active
     ON cards (due_date)
-    WHERE state IN ('Learning', 'Review', 'Relearning');
+    WHERE state IN (1, 2, 3);
 
 CREATE INDEX IF NOT EXISTS idx_cards_deck_due
     ON cards (deck_name, due_date);

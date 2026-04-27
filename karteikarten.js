@@ -11,7 +11,7 @@ const STATUS_CLASS_BY_BUCKET = {
     due: "card-status-due",
     mature: "card-status-mature"
 };
-const DASHBOARD_LEVEL_ORDER = [6, 3, 2, 1];
+const DASHBOARD_LEVEL_ORDER = [6, 2, 1];
 const DASHBOARD_COLOR_BY_KEY = {
     red: "deck-level-red",
     yellow: "deck-level-yellow",
@@ -71,7 +71,7 @@ async function loadCsvCards() {
             german,
             mnemonic,
             statusBucket: "new",
-            state: "New",
+            state: 0,
             dueDate: null
         });
     });
@@ -93,7 +93,8 @@ async function refreshDeckStatus(deckName) {
         Object.values(allChapters).flat().forEach(card => {
             const serverCard = statusById.get(card.cardId);
             if (!serverCard) return;
-            card.state = serverCard.state || card.state;
+            card.state = Number.isInteger(serverCard.state) ? serverCard.state : Number(serverCard.state);
+            if (Number.isNaN(card.state)) card.state = 0;
             card.dueDate = serverCard.due_date || null;
             card.statusBucket = serverCard.status_bucket || card.statusBucket;
         });
@@ -348,21 +349,17 @@ function renderDashboardAnalytics(cards) {
 }
 
 function mapCardToDashboardLevel(card) {
-    if (!card || !card.state) return { level: 2, colorKey: "blue" };
-    if (isDueNow(card.dueDate)) return { level: 6, colorKey: "red" };
-    if (card.state === "Learning" || card.state === "Relearning") return { level: 6, colorKey: "red" };
-    if (card.state === "New") return { level: 2, colorKey: "blue" };
-    if (card.state === "Review") {
-        const stability = Number(card.stability || 0);
-        if (stability > 0 && stability < 3) return { level: 3, colorKey: "yellow" };
-        return { level: 1, colorKey: "green" };
-    }
+    if (!card) return { level: 2, colorKey: "blue" };
+    const state = Number.isInteger(card.state) ? card.state : Number(card.state);
+    if (state === 0) return { level: 2, colorKey: "blue" };
+    if (state === 1 || state === 3) return { level: 6, colorKey: "red" };
+    if (state === 2 && isDueNow(card.dueDate)) return { level: 6, colorKey: "red" };
+    if (state === 2) return { level: 1, colorKey: "green" };
     return { level: 2, colorKey: "blue" };
 }
 
 function getColorKeyForLevel(level) {
     if (level === 6) return "red";
-    if (level === 3) return "yellow";
     if (level === 1) return "green";
     return "blue";
 }

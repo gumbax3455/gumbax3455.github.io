@@ -10,13 +10,9 @@ from psycopg.rows import dict_row
 from .db import close_pool, get_conn, open_pool
 from .fsrs_service import (
     build_card_from_row,
-    derive_elapsed_days,
-    derive_lapses,
-    derive_reps,
-    derive_scheduled_days,
     fresh_card,
-    review,
-    state_to_str,
+    review_step,
+    state_label,
     status_bucket,
 )
 from .settings import settings
@@ -49,10 +45,12 @@ if settings.allowed_origins:
 
 
 def serialize_card_row(card_row: dict[str, Any]) -> dict[str, Any]:
+    state = card_row["state"]
     return {
         "card_id": card_row["card_id"],
         "deck_name": card_row["deck_name"],
-        "state": card_row["state"],
+        "state": state,
+        "state_label": state_label(state),
         "stability": card_row["stability"],
         "difficulty": card_row["difficulty"],
         "elapsed_days": card_row["elapsed_days"],
@@ -61,7 +59,7 @@ def serialize_card_row(card_row: dict[str, Any]) -> dict[str, Any]:
         "lapses": card_row["lapses"],
         "last_review": card_row["last_review"],
         "due_date": card_row["due_date"],
-        "status_bucket": status_bucket(card_row["state"], card_row["due_date"]),
+        "status_bucket": status_bucket(state, card_row["due_date"]),
     }
 
 
@@ -82,7 +80,7 @@ def health() -> dict[str, str]:
 @app.get("/deck-status")
 def deck_status(deck: str | None = Query(default=None)) -> dict[str, Any]:
     query = """
-        SELECT card_id, deck_name, state::text AS state, stability, difficulty, elapsed_days,
+        SELECT card_id, deck_name, state::smallint AS state, stability, difficulty, elapsed_days,
                scheduled_days, reps, lapses, last_review, due_date
         FROM cards
     """
@@ -107,7 +105,7 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-                SELECT card_id, deck_name, state::text AS state, stability, difficulty, elapsed_days,
+                SELECT card_id, deck_name, state::smallint AS state, stability, difficulty, elapsed_days,
                        scheduled_days, reps, lapses, last_review, due_date
                 FROM cards
                 WHERE card_id = %s
@@ -123,21 +121,18 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
             else:
                 card = fresh_card()
 
-            updated_card, _review_log = review(card, payload.rating)
+            step = review_step(card, payload.rating, now=now)
 
             deck_name = payload.deck_name or (row["deck_name"] if row else "Unknown")
-            state = state_to_str(updated_card.state)
-            elapsed_days = derive_elapsed_days(
-                before["last_review"] if before else None,
-                now,
-            )
-            scheduled_days = derive_scheduled_days(updated_card.due, now)
-            reps = derive_reps(before["reps"] if before else None)
-            lapses = derive_lapses(
-                before["lapses"] if before else None,
-                before["state"] if before else None,
-                payload.rating,
-            )
+            stability = _safe_float(step["stability"])
+            difficulty = _safe_float(step["difficulty"])
+            state = int(step["state"])
+            due = step["due"]
+            reps = int(step["reps"])
+            lapses = int(step["lapses"])
+            last_review = step["last_review"]
+            elapsed_days = max(0, (now - (before["last_review"] if before and before["last_review"] else now)).days)
+            scheduled_days = max(0, (due - now).days)
 
             cur.execute(
                 """
@@ -145,7 +140,7 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                     card_id, deck_name, stability, difficulty, elapsed_days, scheduled_days,
                     reps, lapses, state, last_review, due_date
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::fsrs_state, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::smallint, %s, %s)
                 ON CONFLICT (card_id) DO UPDATE
                 SET deck_name = EXCLUDED.deck_name,
                     stability = EXCLUDED.stability,
@@ -161,15 +156,15 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                 (
                     payload.card_id,
                     deck_name,
-                    _safe_float(updated_card.stability),
-                    _safe_float(updated_card.difficulty),
+                    stability,
+                    difficulty,
                     elapsed_days,
                     scheduled_days,
                     reps,
                     lapses,
                     state,
-                    updated_card.last_review or now,
-                    updated_card.due,
+                    last_review,
+                    due,
                 ),
             )
 
@@ -184,8 +179,8 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                 )
                 VALUES (
                     %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s::fsrs_state, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s::fsrs_state, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s::smallint, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s::smallint, %s, %s
                 )
                 """,
                 (
@@ -200,18 +195,18 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                     before["scheduled_days"] if before else None,
                     before["reps"] if before else None,
                     before["lapses"] if before else None,
-                    before["state"] if before else "New",
+                    int(before["state"]) if before and before["state"] is not None else 0,
                     before["last_review"] if before else None,
                     before["due_date"] if before else None,
-                    _safe_float(updated_card.stability),
-                    _safe_float(updated_card.difficulty),
+                    stability,
+                    difficulty,
                     elapsed_days,
                     scheduled_days,
                     reps,
                     lapses,
                     state,
-                    updated_card.last_review or now,
-                    updated_card.due,
+                    last_review,
+                    due,
                 ),
             )
 
@@ -219,7 +214,7 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
 
             cur.execute(
                 """
-                SELECT card_id, deck_name, state::text AS state, stability, difficulty, elapsed_days,
+                SELECT card_id, deck_name, state::smallint AS state, stability, difficulty, elapsed_days,
                        scheduled_days, reps, lapses, last_review, due_date
                 FROM cards
                 WHERE card_id = %s
