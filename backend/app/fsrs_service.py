@@ -14,6 +14,13 @@ def _enum_member(enum_cls, *candidates):
     raise AttributeError(f"{enum_cls.__name__} has none of {candidates}")
 
 
+def _optional_enum_member(enum_cls, *candidates):
+    for candidate in candidates:
+        if hasattr(enum_cls, candidate):
+            return getattr(enum_cls, candidate)
+    return None
+
+
 def int_to_rating(rating: int) -> Rating:
     mapping = {
         1: _enum_member(Rating, "Again", "AGAIN"),
@@ -26,25 +33,25 @@ def int_to_rating(rating: int) -> Rating:
 
 def int_to_state(state: int) -> State:
     # Support multiple py-fsrs enum naming styles across versions.
-    maybe_new = _enum_member(State, "New", "NEW")
+    maybe_new = _optional_enum_member(State, "New", "NEW")
     learning = _enum_member(State, "Learning", "LEARNING")
     review = _enum_member(State, "Review", "REVIEW")
     relearning = _enum_member(State, "Relearning", "RELEARNING")
     mapping = {
-        0: maybe_new,
+        0: maybe_new or learning,
         1: learning,
         2: review,
         3: relearning,
     }
-    return mapping.get(state, maybe_new)
+    return mapping.get(state, maybe_new or learning)
 
 
 def state_to_int(state: State) -> int:
-    maybe_new = _enum_member(State, "New", "NEW")
+    maybe_new = _optional_enum_member(State, "New", "NEW")
     learning = _enum_member(State, "Learning", "LEARNING")
     review = _enum_member(State, "Review", "REVIEW")
     relearning = _enum_member(State, "Relearning", "RELEARNING")
-    if state == maybe_new:
+    if maybe_new is not None and state == maybe_new:
         return 0
     if state == learning:
         return 1
