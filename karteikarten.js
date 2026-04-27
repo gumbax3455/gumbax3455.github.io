@@ -319,53 +319,32 @@ function renderDashboardAnalytics(cards) {
             const amount = totals[level] || 0;
             const item = document.createElement("div");
             item.className = "srs-bar-item";
-            const value = document.createElement("span");
-            value.className = "srs-bar-value";
-            value.innerText = String(amount);
-            const bar = document.createElement("div");
-            const mappedClass = DASHBOARD_COLOR_BY_KEY[getColorKeyForLevel(level)];
-            bar.className = `srs-bar ${mappedClass}`;
-            bar.style.height = `${Math.max(8, Math.round((amount / maxCount) * 70))}px`;
+
             const label = document.createElement("span");
             label.className = "srs-bar-label";
             label.innerText = String(level);
-            item.appendChild(value);
-            item.appendChild(bar);
+
+            const track = document.createElement("div");
+            track.className = "srs-bar-track";
+
+            const bar = document.createElement("div");
+            const mappedClass = DASHBOARD_COLOR_BY_KEY[getColorKeyForLevel(level)];
+            bar.className = `srs-bar ${mappedClass}`;
+
+            const pct = Math.round((amount / maxCount) * 100);
+            bar.style.width = amount === 0 ? "0%" : `${Math.max(8, pct)}%`;
+
+            const value = document.createElement("span");
+            value.className = "srs-bar-value";
+            value.innerText = String(amount);
+
+            track.appendChild(bar);
             item.appendChild(label);
+            item.appendChild(track);
+            item.appendChild(value);
             bars.appendChild(item);
         });
     }
-
-    renderPlaceholderDailyProgress(cards);
-}
-
-function renderPlaceholderDailyProgress(cards) {
-    const polyline = document.getElementById("daily-progress-line");
-    if (!polyline) return;
-    const series = buildPlaceholderDailySeries(cards);
-    const maxValue = Math.max(...series, 1);
-    const stepX = 320 / (series.length - 1);
-    const points = series.map((value, idx) => {
-        const x = Math.round(idx * stepX);
-        const y = Math.round(90 - (value / maxValue) * 78);
-        return `${x},${y}`;
-    });
-    polyline.setAttribute("points", points.join(" "));
-}
-
-function buildPlaceholderDailySeries(cards) {
-    const total = cards.length;
-    const due = cards.filter(card => isDueNow(card.dueDate)).length;
-    const seed = Math.max(3, Math.round(total / 6));
-    return [
-        seed + due + 2,
-        seed + 1,
-        Math.max(1, seed - 1),
-        seed + due,
-        seed + 2,
-        seed,
-        Math.max(1, seed - 2)
-    ];
 }
 
 function mapCardToDashboardLevel(card) {
