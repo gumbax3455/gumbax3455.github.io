@@ -11,12 +11,15 @@ const STATUS_CLASS_BY_BUCKET = {
     due: "card-status-due",
     mature: "card-status-mature"
 };
-const DASHBOARD_LEVEL_ORDER = [6, 2, 1];
+const DASHBOARD_LEVEL_ORDER = ["NEU", 6, 5, 4, 3, 2, 1];
 const DASHBOARD_COLOR_BY_KEY = {
-    red: "deck-level-red",
-    yellow: "deck-level-yellow",
-    blue: "deck-level-blue",
-    green: "deck-level-green"
+    neu: "deck-level-neu",
+    grade6: "deck-level-6",
+    grade5: "deck-level-5",
+    grade4: "deck-level-4",
+    grade3: "deck-level-3",
+    grade2: "deck-level-2",
+    grade1: "deck-level-1"
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -72,6 +75,7 @@ async function loadCsvCards() {
             mnemonic,
             statusBucket: "new",
             state: 0,
+            stability: 0,
             dueDate: null
         });
     });
@@ -95,6 +99,8 @@ async function refreshDeckStatus(deckName) {
             if (!serverCard) return;
             card.state = Number.isInteger(serverCard.state) ? serverCard.state : Number(serverCard.state);
             if (Number.isNaN(card.state)) card.state = 0;
+            card.stability = Number(serverCard.stability);
+            if (Number.isNaN(card.stability)) card.stability = 0;
             card.dueDate = serverCard.due_date || null;
             card.statusBucket = serverCard.status_bucket || card.statusBucket;
         });
@@ -215,6 +221,8 @@ async function rateCard(rating) {
             if (response.ok) {
                 const payload = await response.json();
                 activeCard.state = payload.card.state;
+                activeCard.stability = Number(payload.card.stability);
+                if (Number.isNaN(activeCard.stability)) activeCard.stability = 0;
                 activeCard.dueDate = payload.card.due_date;
                 activeCard.statusBucket = payload.card.status_bucket;
             }
@@ -278,13 +286,13 @@ function renderDeckOverviewRows(cards, rawQuery = "") {
     }
 
     filtered.forEach(card => {
-        const mapped = mapCardToDashboardLevel(card);
+        const mapped = calculateUILevel(card);
         const cardNode = document.createElement("div");
         cardNode.className = `deck-gallery-card ${DASHBOARD_COLOR_BY_KEY[mapped.colorKey]}`;
 
         const levelTag = document.createElement("span");
         levelTag.className = "deck-level-tag";
-        levelTag.innerText = String(mapped.level);
+        levelTag.innerText = String(mapped.label);
 
         const latin = document.createElement("div");
         latin.className = "deck-gallery-latin";
@@ -297,10 +305,10 @@ function renderDeckOverviewRows(cards, rawQuery = "") {
 }
 
 function renderDashboardAnalytics(cards) {
-    const totals = { 6: 0, 3: 0, 2: 0, 1: 0 };
+    const totals = { NEU: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     cards.forEach(card => {
-        const mapped = mapCardToDashboardLevel(card);
-        totals[mapped.level] = (totals[mapped.level] || 0) + 1;
+        const mapped = calculateUILevel(card);
+        totals[mapped.label] = (totals[mapped.label] || 0) + 1;
     });
 
     const totalCards = cards.length || 1;
@@ -348,26 +356,35 @@ function renderDashboardAnalytics(cards) {
     }
 }
 
-function mapCardToDashboardLevel(card) {
-    if (!card) return { level: 2, colorKey: "blue" };
+function calculateUILevel(card) {
+    if (!card) return { label: "NEU", colorKey: "neu" };
     const state = Number.isInteger(card.state) ? card.state : Number(card.state);
-    if (state === 0) return { level: 2, colorKey: "blue" };
-    if (state === 1 || state === 3) return { level: 6, colorKey: "red" };
-    if (state === 2 && isDueNow(card.dueDate)) return { level: 6, colorKey: "red" };
-    if (state === 2) return { level: 1, colorKey: "green" };
-    return { level: 2, colorKey: "blue" };
+    if (state === 0) return { label: "NEU", colorKey: "neu" };
+    if (state === 1 || state === 3) return { label: 6, colorKey: "grade6" };
+
+    if (state === 2) {
+        const stability = Number(card.stability);
+        if (!Number.isNaN(stability)) {
+            if (stability >= 30) return { label: 1, colorKey: "grade1" };
+            if (stability >= 15) return { label: 2, colorKey: "grade2" };
+            if (stability >= 7) return { label: 3, colorKey: "grade3" };
+            if (stability >= 3) return { label: 4, colorKey: "grade4" };
+            return { label: 5, colorKey: "grade5" };
+        }
+        return { label: 5, colorKey: "grade5" };
+    }
+
+    return { label: "NEU", colorKey: "neu" };
 }
 
 function getColorKeyForLevel(level) {
-    if (level === 6) return "red";
-    if (level === 1) return "green";
-    return "blue";
-}
-
-function isDueNow(dueDate) {
-    if (!dueDate) return false;
-    const dueTs = Date.parse(dueDate);
-    return !Number.isNaN(dueTs) && dueTs <= Date.now();
+    if (level === "NEU") return "neu";
+    if (level === 1) return "grade1";
+    if (level === 2) return "grade2";
+    if (level === 3) return "grade3";
+    if (level === 4) return "grade4";
+    if (level === 5) return "grade5";
+    return "grade6";
 }
 
 function summarizeCards(cards) {

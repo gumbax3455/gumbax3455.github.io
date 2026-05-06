@@ -131,8 +131,8 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
             reps = int(step["reps"])
             lapses = int(step["lapses"])
             last_review = step["last_review"]
-            elapsed_days = max(0, (now - (before["last_review"] if before and before["last_review"] else now)).days)
-            scheduled_days = max(0, (due - now).days)
+            elapsed_days = int(step["elapsed_days"])
+            scheduled_days = int(step["scheduled_days"])
 
             cur.execute(
                 """
@@ -195,7 +195,7 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                     before["scheduled_days"] if before else None,
                     before["reps"] if before else None,
                     before["lapses"] if before else None,
-                    int(before["state"]) if before and before["state"] is not None else 0,
+                    int(before["state"]) if before and before["state"] is not None else None,
                     before["last_review"] if before else None,
                     before["due_date"] if before else None,
                     stability,

@@ -218,10 +218,13 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
     border-radius: 999px;
     border: none;
 }
-.srs-bar.deck-level-red { background: #e14b4b; }
-.srs-bar.deck-level-yellow { background: #d8b22f; }
-.srs-bar.deck-level-blue { background: #3f7fff; }
-.srs-bar.deck-level-green { background: #35b96a; }
+.srs-bar.deck-level-neu { background: #3f7fff; }
+.srs-bar.deck-level-6 { background: #d23636; }
+.srs-bar.deck-level-5 { background: #f08f8f; }
+.srs-bar.deck-level-4 { background: #e79a35; }
+.srs-bar.deck-level-3 { background: #d8b22f; }
+.srs-bar.deck-level-2 { background: #74cf8f; }
+.srs-bar.deck-level-1 { background: #1f8f49; }
 
 .gallery-shell {
     background: #1a1a1a;
@@ -300,10 +303,13 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
     color: #888888;
 }
 
-.deck-level-red { border-top-color: #e14b4b; color: #e14b4b; }
-.deck-level-yellow { border-top-color: #d8b22f; color: #d8b22f; }
-.deck-level-blue { border-top-color: #3f7fff; color: #3f7fff; }
-.deck-level-green { border-top-color: #35b96a; color: #35b96a; }
+.deck-level-neu { border-top-color: #3f7fff; color: #3f7fff; }
+.deck-level-6 { border-top-color: #d23636; color: #d23636; }
+.deck-level-5 { border-top-color: #f08f8f; color: #f08f8f; }
+.deck-level-4 { border-top-color: #e79a35; color: #e79a35; }
+.deck-level-3 { border-top-color: #d8b22f; color: #d8b22f; }
+.deck-level-2 { border-top-color: #74cf8f; color: #74cf8f; }
+.deck-level-1 { border-top-color: #1f8f49; color: #1f8f49; }
 
 .lernen-floating-btn {
     position: fixed;

@@ -151,15 +151,18 @@ def review_step(card: Card, rating: int, now: datetime | None = None) -> dict[st
 
     if hasattr(scheduler, "dict_step"):
         step = scheduler.dict_step(card, rating_enum, review_datetime=review_now)
+        updated_card = step["card"]
         return {
-            "card": step["card"],
-            "stability": _as_float(step.get("stability")),
-            "difficulty": _as_float(step.get("difficulty")),
-            "state": _as_int(step.get("state"), state_to_db(step["card"].state)),
-            "due": _as_datetime(step.get("due"), step["card"].due),
-            "reps": _as_int(step.get("reps"), _as_int(getattr(step["card"], "reps", 0))),
-            "lapses": _as_int(step.get("lapses"), _as_int(getattr(step["card"], "lapses", 0))),
-            "last_review": _as_datetime(step.get("last_review"), review_now),
+            "card": updated_card,
+            "stability": _as_float(step.get("stability"), _as_float(getattr(updated_card, "stability", None))),
+            "difficulty": _as_float(step.get("difficulty"), _as_float(getattr(updated_card, "difficulty", None))),
+            "state": _as_int(step.get("state"), state_to_db(updated_card.state)),
+            "due": _as_datetime(step.get("due"), updated_card.due),
+            "reps": _as_int(step.get("reps"), _as_int(getattr(updated_card, "reps", 0))),
+            "lapses": _as_int(step.get("lapses"), _as_int(getattr(updated_card, "lapses", 0))),
+            "elapsed_days": _as_int(step.get("elapsed_days"), _as_int(getattr(updated_card, "elapsed_days", 0))),
+            "scheduled_days": _as_int(step.get("scheduled_days"), _as_int(getattr(updated_card, "scheduled_days", 0))),
+            "last_review": _as_datetime(step.get("last_review"), _as_datetime(getattr(updated_card, "last_review", None), review_now)),
         }
 
     updated_card, _review_log = scheduler.review_card(card, rating_enum)
@@ -171,6 +174,8 @@ def review_step(card: Card, rating: int, now: datetime | None = None) -> dict[st
         "due": _as_datetime(getattr(updated_card, "due", None), review_now),
         "reps": _as_int(getattr(updated_card, "reps", None)),
         "lapses": _as_int(getattr(updated_card, "lapses", None)),
+        "elapsed_days": _as_int(getattr(updated_card, "elapsed_days", None)),
+        "scheduled_days": _as_int(getattr(updated_card, "scheduled_days", None)),
         "last_review": _as_datetime(getattr(updated_card, "last_review", None), review_now),
     }
 
@@ -212,8 +217,8 @@ def _to_int_card_id(card_id: str | int | None) -> int | None:
         return None
     if isinstance(card_id, int):
         return card_id
-    digits = "".join(ch for ch in str(card_id) if ch.isdigit())
-    return int(digits) if digits else None
+    card_id_str = str(card_id)
+    return int(card_id_str) if card_id_str.isdigit() else None
 
 
 def _to_nullable_float(value: float | int | None) -> float | None:

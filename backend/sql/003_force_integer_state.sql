@@ -85,6 +85,15 @@ BEGIN
             FROM information_schema.columns
             WHERE table_schema = 'public' AND table_name = 'review_logs' AND column_name = 'after_state'
         ) INTO review_logs_has_after_state;
+
+        IF NOT review_logs_has_before_state THEN
+            EXECUTE 'ALTER TABLE review_logs ADD COLUMN before_state SMALLINT';
+            review_logs_has_before_state := TRUE;
+        END IF;
+        IF NOT review_logs_has_after_state THEN
+            EXECUTE 'ALTER TABLE review_logs ADD COLUMN after_state SMALLINT';
+            review_logs_has_after_state := TRUE;
+        END IF;
     ELSE
         review_logs_has_before_state := FALSE;
         review_logs_has_after_state := FALSE;
