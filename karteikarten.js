@@ -164,7 +164,13 @@ async function startSession(mode) {
     currentDeck = mode === "all" ? Object.values(allChapters).flat() : [...(allChapters[mode] || [])];
     await refreshDeckStatus(mode);
 
+    // 1. Shuffle everything randomly first
+    currentDeck.sort(() => Math.random() - 0.5);
+
+    // 2. Then sort by SRS priority (Due -> New -> Mature)
+    // This ensures that even within the "Due" bucket, the order is different every time.
     currentDeck.sort((a, b) => bucketPriority(a.statusBucket) - bucketPriority(b.statusBucket));
+
     currentIndex = 0;
     document.getElementById("menu-view").classList.add("hidden");
     document.getElementById("deck-overview-view").classList.add("hidden");
