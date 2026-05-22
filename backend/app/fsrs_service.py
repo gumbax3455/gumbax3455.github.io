@@ -132,11 +132,21 @@ def build_card_from_row(row: dict) -> Card:
     state_value = state_from_db(row["state"]) if row.get("state") is not None else int_to_state(0)
     step_value = 0 if state_value in (State.Learning, State.Relearning) else None
 
+    # Safety: py-fsrs crashes with ZeroDivisionError or AssertionError if a Review/Relearning card
+    # has stability=0 or None. Supply safe defaults for legacy migrations.
+    stability = _to_nullable_float(row.get("stability"))
+    difficulty = _to_nullable_float(row.get("difficulty"))
+    if state_value in (State.Review, State.Relearning):
+        if not stability:
+            stability = 2.3065  # FSRS default for 'Good' on first review
+        if not difficulty:
+            difficulty = 5.0    # FSRS default neutral difficulty
+
     card = Card(
         card_id=card_id,
         due=row["due_date"] or datetime.now(UTC),
-        stability=_to_nullable_float(row.get("stability")),
-        difficulty=_to_nullable_float(row.get("difficulty")),
+        stability=stability,
+        difficulty=difficulty,
         state=state_value,
         last_review=row["last_review"],
         step=step_value,
