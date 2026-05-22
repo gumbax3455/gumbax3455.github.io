@@ -130,19 +130,27 @@ def state_label(value: Any) -> str:
 def build_card_from_row(row: dict) -> Card:
     card_id = _to_int_card_id(row.get("card_id"))
     state_value = state_from_db(row["state"]) if row.get("state") is not None else int_to_state(0)
+    step_value = 0 if state_value in (State.Learning, State.Relearning) else None
 
-    return Card(
+    card = Card(
         card_id=card_id,
         due=row["due_date"] or datetime.now(UTC),
         stability=_to_nullable_float(row.get("stability")),
         difficulty=_to_nullable_float(row.get("difficulty")),
         state=state_value,
         last_review=row["last_review"],
+        step=step_value,
     )
+    card.reps = row.get("reps", 0)
+    card.lapses = row.get("lapses", 0)
+    return card
 
 
 def fresh_card() -> Card:
-    return Card()
+    card = Card()
+    card.reps = 0
+    card.lapses = 0
+    return card
 
 
 def review_step(card: Card, rating: int, now: datetime | None = None) -> dict[str, Any]:
@@ -152,30 +160,61 @@ def review_step(card: Card, rating: int, now: datetime | None = None) -> dict[st
     if hasattr(scheduler, "dict_step"):
         step = scheduler.dict_step(card, rating_enum, review_datetime=review_now)
         updated_card = step["card"]
+        
+        prev_reps = getattr(card, "reps", 0)
+        prev_lapses = getattr(card, "lapses", 0)
+        prev_state_str = state_label(card.state)
+        
+        reps = step.get("reps")
+        if reps is None:
+            reps = derive_reps(prev_reps)
+            
+        lapses = step.get("lapses")
+        if lapses is None:
+            lapses = derive_lapses(prev_lapses, prev_state_str, rating)
+            
+        elapsed_days = step.get("elapsed_days")
+        if elapsed_days is None:
+            elapsed_days = derive_elapsed_days(card.last_review, review_now)
+            
+        scheduled_days = step.get("scheduled_days")
+        if scheduled_days is None:
+            scheduled_days = derive_scheduled_days(step.get("due", updated_card.due), review_now)
+
         return {
             "card": updated_card,
             "stability": _as_float(step.get("stability"), _as_float(getattr(updated_card, "stability", None))),
             "difficulty": _as_float(step.get("difficulty"), _as_float(getattr(updated_card, "difficulty", None))),
             "state": _as_int(step.get("state"), state_to_db(updated_card.state)),
             "due": _as_datetime(step.get("due"), updated_card.due),
-            "reps": _as_int(step.get("reps"), _as_int(getattr(updated_card, "reps", 0))),
-            "lapses": _as_int(step.get("lapses"), _as_int(getattr(updated_card, "lapses", 0))),
-            "elapsed_days": _as_int(step.get("elapsed_days"), _as_int(getattr(updated_card, "elapsed_days", 0))),
-            "scheduled_days": _as_int(step.get("scheduled_days"), _as_int(getattr(updated_card, "scheduled_days", 0))),
+            "reps": reps,
+            "lapses": lapses,
+            "elapsed_days": elapsed_days,
+            "scheduled_days": scheduled_days,
             "last_review": _as_datetime(step.get("last_review"), _as_datetime(getattr(updated_card, "last_review", None), review_now)),
         }
 
-    updated_card, _review_log = scheduler.review_card(card, rating_enum)
+    updated_card, _review_log = scheduler.review_card(card, rating_enum, review_datetime=review_now)
+    
+    prev_reps = getattr(card, "reps", 0)
+    prev_lapses = getattr(card, "lapses", 0)
+    prev_state_str = state_label(card.state)
+    
+    reps = derive_reps(prev_reps)
+    lapses = derive_lapses(prev_lapses, prev_state_str, rating)
+    elapsed_days = derive_elapsed_days(card.last_review, review_now)
+    scheduled_days = derive_scheduled_days(updated_card.due, review_now)
+    
     return {
         "card": updated_card,
         "stability": _as_float(getattr(updated_card, "stability", None)),
         "difficulty": _as_float(getattr(updated_card, "difficulty", None)),
         "state": state_to_db(updated_card.state),
         "due": _as_datetime(getattr(updated_card, "due", None), review_now),
-        "reps": _as_int(getattr(updated_card, "reps", None)),
-        "lapses": _as_int(getattr(updated_card, "lapses", None)),
-        "elapsed_days": _as_int(getattr(updated_card, "elapsed_days", None)),
-        "scheduled_days": _as_int(getattr(updated_card, "scheduled_days", None)),
+        "reps": reps,
+        "lapses": lapses,
+        "elapsed_days": elapsed_days,
+        "scheduled_days": scheduled_days,
         "last_review": _as_datetime(getattr(updated_card, "last_review", None), review_now),
     }
 
