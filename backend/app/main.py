@@ -9,9 +9,7 @@ from psycopg.rows import dict_row
 
 from .db import close_pool, get_conn, open_pool
 from .fsrs_service import (
-    build_card_from_row,
-    fresh_card,
-    review_step,
+    get_next_review_state,
     state_label,
     status_bucket,
 )
@@ -63,15 +61,6 @@ def serialize_card_row(card_row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _safe_float(value: Any) -> float:
-    try:
-        if value is None:
-            return 0.0
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0
-
-
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -115,24 +104,8 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
             )
             row = cur.fetchone()
 
-            before = row
-            if row:
-                card = build_card_from_row(row)
-            else:
-                card = fresh_card()
-
-            step = review_step(card, payload.rating, now=now)
-
+            step = get_next_review_state(row, payload.rating, now=now)
             deck_name = payload.deck_name or (row["deck_name"] if row else "Unknown")
-            stability = _safe_float(step["stability"])
-            difficulty = _safe_float(step["difficulty"])
-            state = int(step["state"])
-            due = step["due"]
-            reps = int(step["reps"])
-            lapses = int(step["lapses"])
-            last_review = step["last_review"]
-            elapsed_days = int(step["elapsed_days"])
-            scheduled_days = int(step["scheduled_days"])
 
             cur.execute(
                 """
@@ -156,15 +129,15 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                 (
                     payload.card_id,
                     deck_name,
-                    stability,
-                    difficulty,
-                    elapsed_days,
-                    scheduled_days,
-                    reps,
-                    lapses,
-                    state,
-                    last_review,
-                    due,
+                    step["stability"],
+                    step["difficulty"],
+                    step["elapsed_days"],
+                    step["scheduled_days"],
+                    step["reps"],
+                    step["lapses"],
+                    step["state"],
+                    step["last_review"],
+                    step["due_date"],
                 ),
             )
 
@@ -189,24 +162,24 @@ def submit_review(payload: ReviewRequest) -> dict[str, Any]:
                     now,
                     payload.rating,
                     payload.response_ms,
-                    before["stability"] if before else None,
-                    before["difficulty"] if before else None,
-                    before["elapsed_days"] if before else None,
-                    before["scheduled_days"] if before else None,
-                    before["reps"] if before else None,
-                    before["lapses"] if before else None,
-                    int(before["state"]) if before and before["state"] is not None else None,
-                    before["last_review"] if before else None,
-                    before["due_date"] if before else None,
-                    stability,
-                    difficulty,
-                    elapsed_days,
-                    scheduled_days,
-                    reps,
-                    lapses,
-                    state,
-                    last_review,
-                    due,
+                    row["stability"] if row else None,
+                    row["difficulty"] if row else None,
+                    row["elapsed_days"] if row else None,
+                    row["scheduled_days"] if row else None,
+                    row["reps"] if row else None,
+                    row["lapses"] if row else None,
+                    int(row["state"]) if row and row["state"] is not None else None,
+                    row["last_review"] if row else None,
+                    row["due_date"] if row else None,
+                    step["stability"],
+                    step["difficulty"],
+                    step["elapsed_days"],
+                    step["scheduled_days"],
+                    step["reps"],
+                    step["lapses"],
+                    step["state"],
+                    step["last_review"],
+                    step["due_date"],
                 ),
             )
 
