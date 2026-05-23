@@ -53,6 +53,7 @@ input:focus { border-color: #007bff; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); 
 .kk-top-nav {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: "left title right";
     align-items: center;
     background: #1a1a1a;
     border-radius: 10px;

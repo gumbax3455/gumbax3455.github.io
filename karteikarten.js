@@ -1,6 +1,7 @@
 let allChapters = {};
 let currentDeck = [];
 let currentDeckName = "all";
+let selectedOverviewDeckName = "";
 let currentIndex = 0;
 let isSubmittingReview = false;
 
@@ -20,6 +21,8 @@ const DASHBOARD_COLOR_BY_KEY = {
     grade1: "deck-level-1"
 };
 
+const DASHBOARD_LEVEL_ORDER = ["NEU", 6, 5, 4, 3, 2, 1];
+
 document.addEventListener("DOMContentLoaded", async () => {
     await loadCsvCards();
     await refreshDeckStatus();
@@ -30,6 +33,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const searchInput = document.getElementById("global-search-input");
     if (searchInput) {
         searchInput.addEventListener("input", renderGlobalSearch);
+    }
+
+    const deckSearchInput = document.getElementById("deck-search-input");
+    if (deckSearchInput) {
+        deckSearchInput.addEventListener("input", () => {
+            const cards = allChapters[selectedOverviewDeckName] || [];
+            renderDeckOverviewRows(cards, deckSearchInput.value);
+        });
     }
 });
 
@@ -163,7 +174,7 @@ function renderDeckOverview() {
         
         const item = document.createElement("div");
         item.className = "deck-list-item";
-        item.onclick = () => startSession([name]);
+        item.onclick = () => openDeckOverview(name);
         item.innerHTML = `
             <div class="deck-name">${name}</div>
             <div class="deck-stat">
@@ -252,20 +263,172 @@ function renderGlobalSearch() {
         const mapped = calculateUILevel(card);
         const cardNode = document.createElement("div");
         cardNode.className = `deck-gallery-card ${DASHBOARD_COLOR_BY_KEY[mapped.colorKey]}`;
+        cardNode.style.cursor = "pointer";
 
         const levelTag = document.createElement("span");
         levelTag.className = "deck-level-tag";
         levelTag.innerText = String(mapped.label);
 
-        const latin = document.createElement("div");
-        latin.className = "deck-gallery-latin";
-        latin.innerText = card.latin;
+        const textNode = document.createElement("div");
+        textNode.className = "deck-gallery-latin";
+        textNode.innerText = card.latin;
+
+        cardNode.onclick = () => {
+            if (textNode.innerText === card.latin) {
+                textNode.innerText = card.german;
+            } else {
+                textNode.innerText = card.latin;
+            }
+        };
 
         cardNode.appendChild(levelTag);
-        cardNode.appendChild(latin);
+        cardNode.appendChild(textNode);
         list.appendChild(cardNode);
     });
 }
+
+// Detailed Deck Overview Logic
+async function openDeckOverview(deckName) {
+    selectedOverviewDeckName = deckName;
+    
+    document.getElementById("main-tabs-container").classList.add("hidden");
+    document.getElementById("menu-view").classList.add("hidden");
+    document.getElementById("session-view").classList.add("hidden");
+    
+    document.getElementById("deck-overview-view").classList.remove("hidden");
+    
+    const navTitle = document.getElementById("nav-title");
+    if (navTitle) {
+        navTitle.innerText = `Latein ${deckName}`;
+        navTitle.classList.remove("hidden");
+    }
+
+    const deckSearchInput = document.getElementById("deck-search-input");
+    if (deckSearchInput) deckSearchInput.value = "";
+
+    const cards = allChapters[deckName] || [];
+    renderDeckOverviewRows(cards);
+}
+
+function closeDeckOverview() {
+    document.getElementById("deck-overview-view").classList.add("hidden");
+    
+    document.getElementById("main-tabs-container").classList.remove("hidden");
+    document.getElementById("nav-title").classList.add("hidden");
+    document.getElementById("menu-view").classList.remove("hidden");
+    
+    const overviewTab = document.querySelector('.tabs-nav li');
+    if (overviewTab) switchTab('tab-overview', overviewTab);
+}
+
+function startLearningFromOverview() {
+    if (!selectedOverviewDeckName) return;
+    startSession([selectedOverviewDeckName]);
+}
+
+function renderDeckOverviewRows(cards, rawQuery = "") {
+    const list = document.getElementById("deck-card-list");
+    if (!list) return;
+    const count = document.getElementById("deck-card-count");
+
+    const query = rawQuery.trim().toLowerCase();
+    const filtered = cards.filter(card => {
+        if (!query) return true;
+        return card.latin.toLowerCase().includes(query) || card.german.toLowerCase().includes(query);
+    });
+    if (count) count.innerText = `${filtered.length}/${cards.length}`;
+
+    list.innerHTML = "";
+    renderDashboardAnalytics(cards);
+
+    if (filtered.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "deck-card-empty";
+        empty.innerText = "Keine Karten gefunden.";
+        list.appendChild(empty);
+        return;
+    }
+
+    filtered.forEach(card => {
+        const mapped = calculateUILevel(card);
+        const cardNode = document.createElement("div");
+        cardNode.className = `deck-gallery-card ${DASHBOARD_COLOR_BY_KEY[mapped.colorKey]}`;
+        cardNode.style.cursor = "pointer";
+
+        const levelTag = document.createElement("span");
+        levelTag.className = "deck-level-tag";
+        levelTag.innerText = String(mapped.label);
+
+        const textNode = document.createElement("div");
+        textNode.className = "deck-gallery-latin";
+        textNode.innerText = card.latin;
+
+        cardNode.onclick = () => {
+            if (textNode.innerText === card.latin) {
+                textNode.innerText = card.german;
+            } else {
+                textNode.innerText = card.latin;
+            }
+        };
+
+        cardNode.appendChild(levelTag);
+        cardNode.appendChild(textNode);
+        list.appendChild(cardNode);
+    });
+}
+
+function renderDashboardAnalytics(cards) {
+    const totals = { NEU: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    cards.forEach(card => {
+        const mapped = calculateUILevel(card);
+        totals[mapped.label] = (totals[mapped.label] || 0) + 1;
+    });
+
+    const totalCards = cards.length || 1;
+    const masteryPct = getDeckMasteryPercentage(cards);
+    const note = cards.length ? (6 - masteryPct * 0.05).toFixed(1) : "-";
+    
+    const gradeValue = document.getElementById("grade-value");
+    const gradeCaption = document.getElementById("grade-caption");
+    if (gradeValue) gradeValue.innerText = note;
+    if (gradeCaption) gradeCaption.innerText = `${masteryPct}% beherrscht`;
+
+    const bars = document.getElementById("srs-bars");
+    if (bars) {
+        const maxCount = Math.max(...DASHBOARD_LEVEL_ORDER.map(level => totals[level] || 0), 1);
+        bars.innerHTML = "";
+        DASHBOARD_LEVEL_ORDER.forEach(level => {
+            const amount = totals[level] || 0;
+            const item = document.createElement("div");
+            item.className = "srs-bar-item";
+
+            const label = document.createElement("span");
+            label.className = "srs-bar-label";
+            label.innerText = String(level);
+
+            const track = document.createElement("div");
+            track.className = "srs-bar-track";
+
+            const bar = document.createElement("div");
+            const mappedClass = DASHBOARD_COLOR_BY_KEY[getColorKeyForLevel(level)];
+            bar.className = `srs-bar ${mappedClass}`;
+
+            const pct = Math.round((amount / maxCount) * 100);
+            bar.style.width = amount === 0 ? "0%" : `${Math.max(8, pct)}%`;
+
+            const value = document.createElement("span");
+            value.className = "srs-bar-value";
+            value.innerText = String(amount);
+
+            track.appendChild(bar);
+            item.appendChild(label);
+            item.appendChild(track);
+            item.appendChild(value);
+            bars.appendChild(item);
+        });
+    }
+}
+
 
 // Session Logic
 async function startSession(deckArray) {
@@ -289,6 +452,7 @@ async function startSession(deckArray) {
 
     currentIndex = 0;
     document.getElementById("menu-view").classList.add("hidden");
+    document.getElementById("deck-overview-view").classList.add("hidden");
     document.getElementById("session-view").classList.remove("hidden");
     
     document.getElementById("main-tabs-container").classList.add("hidden");
@@ -371,13 +535,23 @@ function handleBack() {
     if (!document.getElementById("session-view").classList.contains("hidden")) {
         // Quit session
         document.getElementById("session-view").classList.add("hidden");
-        document.getElementById("menu-view").classList.remove("hidden");
         
-        document.getElementById("main-tabs-container").classList.remove("hidden");
-        document.getElementById("nav-title").classList.add("hidden");
+        if (currentDeckName !== "Omnireview" && selectedOverviewDeckName) {
+            document.getElementById("deck-overview-view").classList.remove("hidden");
+            const cards = allChapters[selectedOverviewDeckName] || [];
+            const searchTerm = document.getElementById("deck-search-input")?.value || "";
+            renderDeckOverviewRows(cards, searchTerm);
+            document.getElementById("nav-title").innerText = `Latein ${selectedOverviewDeckName}`;
+        } else {
+            document.getElementById("menu-view").classList.remove("hidden");
+            document.getElementById("main-tabs-container").classList.remove("hidden");
+            document.getElementById("nav-title").classList.add("hidden");
+        }
         
         // Refresh overview with new stats
         renderDeckOverview();
+    } else if (!document.getElementById("deck-overview-view").classList.contains("hidden")) {
+        closeDeckOverview();
     } else {
         // Return to dictionary hub
         window.location.href = "index.html";
