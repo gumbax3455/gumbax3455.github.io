@@ -8,26 +8,47 @@
 <body class="flashcard-mode">
     <div class="kk-shell">
         <header class="kk-top-nav">
-            <div class="kk-nav-left">
-                <button class="back-btn" onclick="handleBack()">Stapel</button>
+            <div class="kk-nav-left" style="grid-area: left;">
+                <button class="back-btn" onclick="handleBack()">Zurück</button>
             </div>
-            <h1 class="kk-nav-title" id="nav-title">Latein Lektionen</h1>
-            <button class="kk-menu-btn" aria-label="Mehr Optionen">...</button>
+            
+            <nav aria-label="Primary" id="main-tabs-container" style="grid-area: title; justify-self: center;">
+                <ul class="tabs-nav" id="main-tabs">
+                    <li class="active" onclick="switchTab('tab-overview', this)">Übersicht</li>
+                    <li onclick="switchTab('tab-omni', this)">Omnireview</li>
+                    <li onclick="switchTab('tab-search', this)">Suche</li>
+                </ul>
+            </nav>
+            <h1 class="kk-nav-title hidden" id="nav-title" style="grid-area: title; justify-self: center;">Latein Lektionen</h1>
+            
+            <div style="grid-area: right; justify-self: end;"></div>
         </header>
 
         <div id="menu-view" class="kk-view">
-            <section id="deck-overview" class="deck-overview">
-                <h2 id="overview-title">Alle Lektionen</h2>
-                <div class="overview-grid">
-                    <div class="overview-item"><span>Gesamt</span><strong id="overview-total">0</strong></div>
-                    <div class="overview-item overview-new"><span>Neu</span><strong id="overview-new">0</strong></div>
-                    <div class="overview-item overview-due"><span>Faellig/Problem</span><strong id="overview-due">0</strong></div>
-                    <div class="overview-item overview-mature"><span>Reif</span><strong id="overview-mature">0</strong></div>
+            <!-- Tab 1: Overview -->
+            <div id="tab-overview" class="tab-panel active-panel">
+                <div class="deck-list" id="deck-list-container">
+                    <!-- populated by JS -->
                 </div>
-            </section>
-            <div class="chapter-list">
-                <button class="chapter-btn omnireview-btn" onclick="startSession('all')">Omnireview (Alles)</button>
-                <div id="chapter-buttons"></div>
+            </div>
+
+            <!-- Tab 2: Omnireview -->
+            <div id="tab-omni" class="tab-panel">
+                <div class="omni-controls">
+                    <h2 style="color: #fff; font-size: 1.2rem;">Decks für Omnireview wählen</h2>
+                    <button class="omni-start-btn" id="omni-start-btn" onclick="startOmnireview()" disabled>Start (0)</button>
+                </div>
+                <div class="omni-grid" id="omni-deck-grid">
+                    <!-- populated by JS -->
+                </div>
+            </div>
+
+            <!-- Tab 3: Search -->
+            <div id="tab-search" class="tab-panel">
+                <input type="text" id="global-search-input" class="deck-search-pill" placeholder="Wörter suchen..." style="width: 100%; max-width: none; margin-bottom: 20px;">
+                <div class="deck-card-list" id="global-search-results" style="flex-wrap: wrap;">
+                    <!-- populated by JS -->
+                </div>
             </div>
         </div>
 
