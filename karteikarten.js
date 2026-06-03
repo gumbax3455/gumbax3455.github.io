@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadCsvCards();
     await refreshDeckStatus();
     
+    const overlay = document.getElementById("loading-overlay");
+    if (overlay) overlay.classList.add("hidden");
+    
     renderDeckOverview();
     renderOmniGrid();
     
@@ -215,6 +218,22 @@ function renderOmniGrid() {
         label.appendChild(text);
         grid.appendChild(label);
     });
+}
+
+function selectDecks1to10() {
+    const checkboxes = document.querySelectorAll("#omni-deck-grid input[type='checkbox']");
+    checkboxes.forEach(cb => {
+        const match = cb.value.match(/Lektion\s+(\d+)/i);
+        if (match) {
+            const num = parseInt(match[1]);
+            if (num >= 1 && num <= 10) {
+                cb.checked = true;
+            }
+        }
+    });
+    updateOmniStartButton();
+    const btn = document.getElementById("select-1-10-btn");
+    if (btn) btn.style.display = "none";
 }
 
 function updateOmniStartButton() {

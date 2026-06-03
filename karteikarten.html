@@ -6,6 +6,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="flashcard-mode">
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <h2 style="margin-bottom: 10px; color: #fff;">Verbinde zum Server...</h2>
+        <p style="font-size: 0.85rem; opacity: 0.8; max-width: 300px; line-height: 1.5;">Hinweis: Es kann bis zu 2 Minuten dauern, bis der Server aus dem Standby aufwacht.</p>
+    </div>
+
     <div class="kk-shell">
         <header class="kk-top-nav">
             <div class="kk-nav-left" style="grid-area: left;">
@@ -24,6 +30,8 @@
             <div style="grid-area: right; justify-self: end;"></div>
         </header>
 
+        <div class="warning-banner" style="margin-top: 0; margin-bottom: 0;">Lektionen 11-20 sind nicht überprüft und können Fehler enthalten!</div>
+
         <div id="menu-view" class="kk-view">
             <!-- Tab 1: Overview -->
             <div id="tab-overview" class="tab-panel active-panel">
@@ -35,7 +43,10 @@
             <!-- Tab 2: Omnireview -->
             <div id="tab-omni" class="tab-panel">
                 <div class="omni-controls">
-                    <h2 style="color: #fff; font-size: 1.2rem;">Decks für Omnireview wählen</h2>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <h2 style="color: #fff; font-size: 1.2rem;">Decks für Omnireview wählen</h2>
+                        <button class="deck-action-btn" id="select-1-10-btn" onclick="selectDecks1to10()" style="align-self: flex-start;">Lektionen 1-10 auswählen</button>
+                    </div>
                     <button class="omni-start-btn" id="omni-start-btn" onclick="startOmnireview()" disabled>Start (0)</button>
                 </div>
                 <div class="omni-grid" id="omni-deck-grid">
